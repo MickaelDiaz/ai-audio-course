@@ -22,7 +22,7 @@
       phonèmes plausibles-et-faux, et son coût se compte en <strong>NFE</strong> (Number of Function
       Evaluations) : le nombre de forwards du réseau nécessaires pour produire <em>une</em> sortie.</p>
       <p>Les trois familles sont trois façons de <strong>transporter</strong> une distribution de bruit vers
-      la variété des sons propres (le croissant teal). Le <strong>GAN</strong> saute en un seul forward
+      la variété des sons propres (le croissant corail). Le <strong>GAN</strong> saute en un seul forward
       (NFE = 1), mais son entraînement adversarial générateur-contre-discriminateur est instable
       (mode collapse, équilibre fragile). La <strong>diffusion</strong> débruite pas à pas — une marche
       aléatoire dont le bruit décroît step après step — et reste la référence qualité en offline, au prix
@@ -188,14 +188,14 @@
           if (fW !== W || fH !== Hp) { rebuildField(W, y0, y1); fW = W; fH = Hp; }
           ctx.save();
           ctx.globalAlpha = 0.9 * fade;
-          ctx.strokeStyle = 'rgba(139,150,165,0.30)'; ctx.lineWidth = 1;
+          ctx.strokeStyle = 'rgba(155,152,143,0.30)'; ctx.lineWidth = 1;
           ctx.beginPath();
           for (let k = 0; k < fn; k++) {
             ctx.moveTo(ffx[k] - fdx[k] * 6, ffy[k] - fdy[k] * 6);
             ctx.lineTo(ffx[k] + fdx[k] * 6, ffy[k] + fdy[k] * 6);
           }
           ctx.stroke();
-          ctx.fillStyle = 'rgba(139,150,165,0.45)';
+          ctx.fillStyle = 'rgba(155,152,143,0.45)';
           ctx.beginPath();
           for (let k = 0; k < fn; k++) {
             const hx = ffx[k] + fdx[k] * 6, hy = ffy[k] + fdy[k] * 6;
@@ -232,10 +232,10 @@
         }
         ctx.restore();
         if (small) {
-          text(ctx, 'parole propre', ccx + R * 0.30, ccy, { align: 'center', size: 10, color: '#2dd4bfbb' });
+          text(ctx, 'parole propre', ccx + R * 0.30, ccy, { align: 'center', size: 10, color: '#ff5c49bb' });
         } else {
-          text(ctx, 'distribution des spectres', ccx + R * 0.32, ccy - 7, { align: 'center', size: 11, color: '#2dd4bfcc' });
-          text(ctx, 'de parole propre', ccx + R * 0.32, ccy + 8, { align: 'center', size: 11, color: '#2dd4bfcc' });
+          text(ctx, 'distribution des spectres', ccx + R * 0.32, ccy - 7, { align: 'center', size: 11, color: '#ff5c49cc' });
+          text(ctx, 'de parole propre', ccx + R * 0.32, ccy + 8, { align: 'center', size: 11, color: '#ff5c49cc' });
         }
 
         /* --- frontière du discriminateur (GAN) : oscille puis se resserre --- */
@@ -312,7 +312,7 @@
             ctx.beginPath(); ctx.arc(ppx, ppy, 2.2, 0, TAU); ctx.fill();
             ctx.globalAlpha = 0.16 * fade;
             ctx.beginPath(); ctx.arc(ppx, ppy, 5.5, 0, TAU); ctx.fill();
-          } else {                                             // arrivée : devient « voix » (teal)
+          } else {                                             // arrivée : devient « voix » (corail)
             const q = clamp((P.p - 1) / (LIFE - 1), 0, 1);
             ctx.globalAlpha = (1 - q) * fade;
             glowDot(ctx, tx, ty, 2.6 * (1 - 0.5 * q), palette.voice);

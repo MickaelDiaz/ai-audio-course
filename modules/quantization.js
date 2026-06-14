@@ -236,7 +236,7 @@
           const cx = x + g * (cw + gapC);
           ctx.strokeStyle = P.grid; ctx.lineWidth = 1;
           ctx.strokeRect(cx + 0.5, py + 0.5, cw - 1, ph - 1);
-          // silhouette de densité (teal)
+          // silhouette de densité (corail)
           ctx.fillStyle = P.voice; ctx.globalAlpha = 0.26;
           const bh = ph / NBINS;
           for (let b = 0; b < NBINS; b++) {
@@ -268,12 +268,12 @@
         }
         ctx.globalAlpha = 1;
 
-        // histogramme d'erreur (rouge) — pousse au rythme de la vague
+        // histogramme d'erreur (bleu) — pousse au rythme de la vague
         const ey = py + ph + 16;
         const eRtxt = st.eRange < 0.01 ? st.eRange.toFixed(4) : st.eRange.toFixed(3);
         U.text(ctx, 'Erreur de quantification q(w) − w', x, ey + 9, { size: 10, color: P.dim });
-        U.text(ctx, 'max ±' + eRtxt, x + wd, ey + 9, { size: 9, color: P.red, align: 'right', mono: true });
-        U.bars(ctx, ebinsN, x, ey + 13, wd, errH - 13, { color: P.red, scale: gp, gap: 1, alpha: 0.75 });
+        U.text(ctx, 'max ±' + eRtxt, x + wd, ey + 9, { size: 9, color: P.blue, align: 'right', mono: true });
+        U.bars(ctx, ebinsN, x, ey + 13, wd, errH - 13, { color: P.blue, scale: gp, gap: 1, alpha: 0.75 });
         ctx.strokeStyle = P.grid; ctx.lineWidth = 1;
         ctx.strokeRect(x + 0.5, ey + 13.5, wd - 1, errH - 14);
 

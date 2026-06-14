@@ -304,7 +304,7 @@
           ctx.save();
           ctx.strokeStyle = palette.voice;
           ctx.globalAlpha = 0.55;
-          ctx.strokeRect(gx - 3, yy - 3, gridW + 4, gridW + 4); // rappel du cadre teal
+          ctx.strokeRect(gx - 3, yy - 3, gridW + 4, gridW + 4); // rappel du cadre corail
           ctx.restore();
           for (let r = 0; r < 3; r++) {
             for (let c = 0; c < 3; c++) {
@@ -314,7 +314,7 @@
               ctx.fillRect(x0, y0, g, g);
               U.text(ctx, fmtW(v), x0 + g / 2, y0 + g / 2,
                 { size: 9, mono: true, bold: true, align: 'center', baseline: 'middle',
-                  color: v > 0 ? palette.voice : v < 0 ? palette.red : palette.dim });
+                  color: v > 0 ? palette.voice : v < 0 ? palette.blue : palette.dim });
             }
           }
           yy += gridW + 20;

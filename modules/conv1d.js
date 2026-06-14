@@ -226,8 +226,8 @@
         ctx.save();
         ctx.globalAlpha = 0.07 * fade; ctx.fillStyle = palette.voice;
         ctx.fillRect(wx1, waveY, Math.max(wx2 - wx1, 1), waveH);
-        if (!causal && i2 > n) {                       // partie « futur » grisée en rouge
-          ctx.globalAlpha = 0.12 * fade; ctx.fillStyle = palette.red;
+        if (!causal && i2 > n) {                       // partie « futur » en jaune (look-ahead)
+          ctx.globalAlpha = 0.12 * fade; ctx.fillStyle = palette.yellow;
           ctx.fillRect(px(n) + 2, waveY, wx2 - px(n) - 2, waveH);
         }
         ctx.globalAlpha = 0.3 * fade; ctx.strokeStyle = palette.voice; ctx.lineWidth = 1;
@@ -237,7 +237,7 @@
           const xi = n + offAt(i, d, causal);
           if (xi < 0 || xi >= N) continue;
           const future = xi > n;
-          ctx.fillStyle = future ? palette.red : palette.voice;
+          ctx.fillStyle = future ? palette.yellow : palette.voice;
           ctx.beginPath(); ctx.arc(px(xi), yIn(xi), small ? 2 : 2.6, 0, TAU); ctx.fill();
         }
         ctx.strokeStyle = palette.voice; ctx.lineWidth = 1.2;           // anneau = échantillon courant
@@ -256,7 +256,7 @@
           const bx = px(xi);
           if (bx < x0 - 2 || bx > x0 + plotW + 2) continue;
           const hb = (curW[i] / wMax) * (barsH / 2 - 2);
-          ctx.fillStyle = curW[i] >= 0 ? palette.voice : palette.red;   // positifs teal, négatifs rouge
+          ctx.fillStyle = curW[i] >= 0 ? palette.voice : palette.blue;   // positifs corail, négatifs bleu
           ctx.fillRect(bx - bw / 2, Math.min(yb, yb - hb), bw, Math.abs(hb));
         }
         ctx.restore();
@@ -265,7 +265,7 @@
         /* --- Chip causalité / look-ahead (valeurs vraies) --- */
         const la = MID * d;
         if (!causal) {
-          U.chip(ctx, `look-ahead = ${la} éch (+${fr(la / SR * 1000, 1)} ms)`, W - (small ? 172 : 200), waveY + 12, { color: palette.red, size: small ? 8.5 : 10 });
+          U.chip(ctx, `look-ahead = ${la} éch (+${fr(la / SR * 1000, 1)} ms)`, W - (small ? 172 : 200), waveY + 12, { color: palette.yellow, size: small ? 8.5 : 10 });
         } else {
           U.chip(ctx, 'causal : passé uniquement → streaming OK', W - (small ? 188 : 230), waveY + 12, { color: palette.voice, size: small ? 8.5 : 10 });
         }

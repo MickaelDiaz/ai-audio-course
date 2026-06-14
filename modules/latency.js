@@ -15,7 +15,7 @@
     la: palette.mix,      // look-ahead (violet)
     fifo: palette.dim,    // attente FIFO ≈ ½ hop (gris)
     calc: palette.rest,   // temps de calcul (ambre)
-    sig: palette.voice,   // le signal vocal (teal)
+    sig: palette.voice,   // le signal vocal (corail)
     ok: palette.green, warn: palette.rest, over: palette.red,
   };
 
@@ -171,10 +171,10 @@
 
         /* — axe temporel central — */
         ctx.save();
-        ctx.strokeStyle = 'rgba(139,150,165,0.55)';
+        ctx.strokeStyle = 'rgba(155,152,143,0.55)';
         ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(mainX, axisY + 0.5); ctx.lineTo(right, axisY + 0.5); ctx.stroke();
-        ctx.strokeStyle = 'rgba(230,237,243,0.16)'; // bord droit = maintenant
+        ctx.strokeStyle = 'rgba(244,242,236,0.16)'; // bord droit = maintenant
         ctx.setLineDash([3, 4]);
         ctx.beginPath(); ctx.moveTo(right - 0.5, yIn); ctx.lineTo(right - 0.5, yOut + outH); ctx.stroke();
         ctx.setLineDash([]);
@@ -216,7 +216,7 @@
             }
             ctx.globalAlpha = 1;
           }
-          /* marque d'entrée (teal) sur la waveform du haut, à t=0 */
+          /* marque d'entrée (corail) sur la waveform du haut, à t=0 */
           ctx.globalAlpha = a;
           ctx.strokeStyle = C.sig; ctx.lineWidth = 1.6;
           ctx.beginPath(); ctx.moveTo(xE, yIn); ctx.lineTo(xE, axisY + 5); ctx.stroke();
@@ -249,7 +249,7 @@
             U.roundRect(ctx, mx - lw / 2 - 7, my - ls / 2 - 5, lw + 14, ls + 10, 7);
             ctx.fillStyle = palette.panel; ctx.fill();
             ctx.strokeStyle = C.sig + '66'; ctx.lineWidth = 1; ctx.stroke();
-            U.text(ctx, lbl, mx, my, { size: ls, color: C.sig, bold: true, align: 'center', baseline: 'middle' });
+            U.text(ctx, lbl, mx, my, { size: ls, color: zone, bold: true, align: 'center', baseline: 'middle' });
             ctx.globalAlpha = 1;
           } else if (isCur) {
             /* front de traitement : l'événement est encore « dans » le système */

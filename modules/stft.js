@@ -166,7 +166,7 @@
           ctx.stroke();
         }
         ctx.globalAlpha = 0.13; ctx.fillStyle = palette.voice;
-        ctx.fillRect(xr - wn, y + 2, wn, h - 4);    // rectangle teal de la fenêtre courante
+        ctx.fillRect(xr - wn, y + 2, wn, h - 4);    // rectangle corail de la fenêtre courante
         ctx.globalAlpha = 0.18;
         winPath(ctx, xr - wn, wn, yBot, hc, useHann); ctx.fill();
         ctx.globalAlpha = 0.95; ctx.lineWidth = 1.5;
@@ -228,7 +228,7 @@
           U.text(ctx, val, pr, yy, { size: 11, color, align: 'right', bold: true, mono: true });
           yy += 15;
         };
-        row('Résolution temporelle Δt = N/sr', 'Δt = N/sr', U.fmt.ms(N / SR), palette.voice);
+        row('Résolution temporelle Δt = N/sr', 'Δt = N/sr', U.fmt.ms(N / SR), palette.mix);
         row('Résolution fréquentielle Δf = sr/N', 'Δf = sr/N', U.fmt.hz(SR / N), palette.blue);
         if (rh > 150) {
           row('Cadence d’analyse sr/hop', 'sr/hop', `${(SR / hop).toFixed(1)} trames/s`, palette.dim);
@@ -269,7 +269,7 @@
         U.roundRect(ctx, x, y, w, h, 6);
         ctx.fillStyle = palette.panel; ctx.fill();
         ctx.strokeStyle = palette.grid; ctx.stroke();
-        U.text(ctx, `Δt = ${U.fmt.ms(N / SR)}`, x + 8, y + 16, { size: 10, color: palette.voice, mono: true, bold: true });
+        U.text(ctx, `Δt = ${U.fmt.ms(N / SR)}`, x + 8, y + 16, { size: 10, color: palette.mix, mono: true, bold: true });
         U.text(ctx, `Δf = ${U.fmt.hz(SR / N)}`, x + w * 0.38, y + 16, { size: 10, color: palette.blue, mono: true, bold: true });
         U.text(ctx, `${(SR / hop).toFixed(0)} trames/s`, x + w - 8, y + 16, { size: 9, color: palette.dim, align: 'right', mono: true });
         U.text(ctx, 'Latence algorithmique :', x + 8, y + h - 9, { size: 9.5, color: palette.dim });

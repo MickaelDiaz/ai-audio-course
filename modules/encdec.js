@@ -182,7 +182,7 @@
           U.arrow(ctx, decXi(i), levY[i] - nodeH / 2, decXi(i - 1), levY[i - 1] + nodeH / 2, { color: aCol, alpha: 0.8 });
         U.arrow(ctx, decXi(0), levY[0] - nodeH / 2, wpX[nSeg], wpY[nSeg] + 2, { color: aCol, alpha: 0.8 });
 
-        /* ---------- skip connections : arcs pointillés teal + paquets rapides ---------- */
+        /* ---------- skip connections : arcs pointillés corail + paquets rapides ---------- */
         const lift = compact ? 9 : 14;
         ctx.save();
         for (let i = 0; i < d; i++) {

@@ -1,14 +1,15 @@
 /* ============ Audio AI Atlas — thème ============ */
 :root {
-  --bg: #0b0e14;
-  --stage: #0d1117;
-  --panel: #131a26;
-  --panel2: #1a2333;
-  --border: rgba(148, 163, 184, 0.14);
-  --text: #e6edf3;
-  --dim: #8b96a5;
-  --faint: #566070;
-  --voice: #2dd4bf;
+  --bg: #0c0c0e;
+  --stage: #0e0e11;
+  --panel: #161619;
+  --panel2: #1f1f23;
+  --border: rgba(255, 255, 255, 0.10);
+  --text: #f4f2ec;
+  --dim: #9b988f;
+  --faint: #605d57;
+  --accent: #ff5c49;
+  --voice: #ff5c49;
   --rest: #fbbf24;
   --mix: #a78bfa;
   --blue: #60a5fa;
@@ -23,8 +24,7 @@ body {
   margin: 0;
   background: var(--bg);
   background-image:
-    radial-gradient(1100px 500px at 15% -10%, rgba(45, 212, 191, 0.07), transparent 60%),
-    radial-gradient(900px 500px at 95% 0%, rgba(167, 139, 250, 0.06), transparent 55%);
+    radial-gradient(1200px 560px at 50% -16%, rgba(255, 92, 73, 0.05), transparent 62%);
   background-attachment: fixed;
   color: var(--text);
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -36,22 +36,28 @@ body {
 
 #app { max-width: 1060px; margin: 0 auto; padding: 0 16px 48px; }
 
-a { color: var(--blue); text-decoration: none; }
+a { color: var(--accent); text-decoration: none; }
 button { font-family: inherit; }
 
 /* ============ Accueil ============ */
-.hero { padding: 36px 4px 10px; }
+.hero { padding: 42px 4px 14px; }
 .hero h1 {
-  margin: 0 0 6px;
-  font-size: clamp(28px, 6vw, 42px);
+  margin: 0 0 8px;
+  font-size: clamp(30px, 7vw, 48px);
   font-weight: 800;
-  letter-spacing: -0.5px;
-  background: linear-gradient(92deg, #5eead4 0%, #60a5fa 45%, #a78bfa 90%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  letter-spacing: -1.4px;
+  line-height: 1.04;
+  color: var(--text);
 }
-.hero p { margin: 0; color: var(--dim); font-size: clamp(14px, 3.5vw, 16px); max-width: 640px; }
+.hero h1::after { content: '.'; color: var(--accent); }
+.hero p {
+  margin: 0;
+  color: var(--dim);
+  font-size: clamp(14px, 3.5vw, 16px);
+  max-width: 600px;
+  padding-left: 13px;
+  border-left: 2px solid var(--accent);
+}
 
 .chips {
   display: flex; gap: 8px; flex-wrap: nowrap;
@@ -71,8 +77,8 @@ button { font-family: inherit; }
   cursor: pointer;
   transition: all 0.15s;
 }
-.chip-btn:hover { color: var(--text); border-color: rgba(148, 163, 184, 0.35); }
-.chip-btn.on { color: #0b0e14; background: var(--chipc, var(--blue)); border-color: transparent; }
+.chip-btn:hover { color: var(--text); border-color: rgba(255, 255, 255, 0.35); }
+.chip-btn.on { color: var(--bg); background: var(--chipc, var(--blue)); border-color: transparent; }
 
 .grid {
   display: grid;
@@ -99,7 +105,7 @@ button { font-family: inherit; }
 }
 .card:hover, .card:active {
   transform: translateY(-2px);
-  border-color: rgba(148, 163, 184, 0.32);
+  border-color: rgba(255, 255, 255, 0.32);
   box-shadow: 0 8px 28px -10px rgba(0, 0, 0, 0.55);
 }
 .card-top { display: flex; align-items: center; gap: 11px; }
@@ -185,12 +191,12 @@ button { font-family: inherit; }
   -webkit-appearance: none; appearance: none;
   width: 18px; height: 18px; border-radius: 50%;
   background: var(--voice);
-  border: 2px solid #0b0e14;
+  border: 2px solid var(--bg);
   cursor: pointer;
 }
 .ctl input[type='range']::-moz-range-thumb {
   width: 16px; height: 16px; border-radius: 50%;
-  background: var(--voice); border: 2px solid #0b0e14; cursor: pointer;
+  background: var(--voice); border: 2px solid var(--bg); cursor: pointer;
 }
 .ctl select {
   border: 1px solid var(--border); background: var(--panel2); color: var(--text);
@@ -245,7 +251,7 @@ button { font-family: inherit; }
 }
 .mod-nav a span { display: block; color: var(--faint); font-size: 11px; margin-bottom: 2px; }
 .mod-nav a.next { text-align: right; }
-.mod-nav a:hover { border-color: rgba(148, 163, 184, 0.35); }
+.mod-nav a:hover { border-color: rgba(255, 255, 255, 0.35); }
 
 @media (max-width: 640px) {
   #app { padding: 0 10px 40px; }

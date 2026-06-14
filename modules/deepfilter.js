@@ -251,10 +251,10 @@
           const gdb = 20 * Math.log10(Math.max(g, 0.001));
           const leak = g >= 0.5;
           U.chip(ctx, (leak ? 'la plosive fuit : résidu ' : 'plosive atténuée : résidu ') + U.fmt.pct(g),
-            px0, yy, { color: leak ? palette.red : palette.green, size: narrow ? 9 : 10 });
+            px0, yy, { color: leak ? palette.yellow : palette.green, size: narrow ? 9 : 10 });
           yy += 27;
           U.chip(ctx, (g < 0.5 ? 'voix de la même frame coupée : ' : 'voix préservée : ') + U.fmt.db(gdb),
-            px0, yy, { color: g < 0.5 ? palette.red : palette.green, size: narrow ? 9 : 10 });
+            px0, yy, { color: g < 0.5 ? palette.yellow : palette.green, size: narrow ? 9 : 10 });
           if (!narrow) {
             yy += 30;
             U.text(ctx, 'Un seul scalaire pour toute la', px0, yy, { size: 10, color: palette.dim });

@@ -3,8 +3,8 @@
   'use strict';
 
   const CATS = {
-    signal: { label: 'Signal & DSP', color: '#60a5fa' },
-    layers: { label: 'Couches neuronales', color: '#2dd4bf' },
+    signal: { label: 'Signal & DSP', color: '#ff5c49' },
+    layers: { label: 'Couches neuronales', color: '#60a5fa' },
     archi: { label: 'Architectures', color: '#a78bfa' },
     system: { label: 'Temps réel & embarqué', color: '#fbbf24' },
   };
@@ -44,7 +44,7 @@
       b.addEventListener('click', () => { filter = key; renderHome(); });
       chips.appendChild(b);
     };
-    mkChip('all', 'Tout', '#94a3b8');
+    mkChip('all', 'Tout', '#cfcabf');
     for (const [k, c] of Object.entries(CATS)) mkChip(k, c.label, c.color);
     app.appendChild(chips);
 

@@ -257,7 +257,7 @@
         ctx.globalAlpha = 1;
 
         if (!tgComp.value) {
-          ctx.strokeStyle = palette.red;
+          ctx.strokeStyle = palette.blue;
           ctx.lineWidth = 1.2;
           ctx.setLineDash([4, 4]);
           ctx.beginPath();

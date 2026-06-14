@@ -22,7 +22,7 @@
   const CYC = 2;               // s — cycle de mise en avant d'une composante
 
   const COMP_COLORS = [palette.blue, palette.teal, palette.violet, palette.pink,
-    palette.orange, palette.green, palette.yellow, palette.red, '#38bdf8'];
+    palette.orange, palette.green, palette.yellow, palette.red, palette.voice];
 
   const frNum = (v) => String(v).replace('.', ',');
   const fr1 = (v) => v.toFixed(1).replace('.', ',');

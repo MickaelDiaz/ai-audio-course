@@ -47,7 +47,7 @@
       le chemin séquentiel est en <strong>O(T)</strong>, et le gradient s'évanouit bien avant la fin
       (chaîne rouge en bas de l'animation).</p>
       <p>L'idée dual-path : <strong>plier</strong> la séquence en <code>S = T/K</code> chunks de <code>K</code> frames,
-      posés en matrice 2D. On alterne ensuite deux petits RNN : la passe <strong>intra-chunk</strong> (teal)
+      posés en matrice 2D. On alterne ensuite deux petits RNN : la passe <strong>intra-chunk</strong> (corail)
       parcourt chaque ligne et modélise la structure locale fine ; la passe <strong>inter-chunk</strong> (ambre)
       parcourt chaque colonne et relie les chunks entre eux. Après <strong>un seul bloc intra+inter</strong>,
       chaque frame a accès à toute la séquence : sa ligne d'abord, puis toutes les lignes via les colonnes —
@@ -330,10 +330,10 @@
 
         U.text(ctx, 'RNN simple — T = ' + T + ' pas séquentiels (×' + DECAY + ' par pas)', m, l1y,
           { size: fs, color: palette.dim });
-        U.text(ctx, 'survie ≈ ' + surv1.toFixed(2), W - m, l1y, { size: fs, color: palette.red, align: 'right' });
+        U.text(ctx, 'survie ≈ ' + surv1.toFixed(2), W - m, l1y, { size: fs, color: palette.dim, align: 'right' });
         for (let i = 0; i < T; i++) {
           U.arrow(ctx, m + i * step + 1, a1y, m + (i + 1) * step - 1, a1y,
-            { color: palette.red, alpha: Math.max(0.045, Math.pow(DECAY, i)), head: 3, lw: 1.2 });
+            { color: palette.dim, alpha: Math.max(0.045, Math.pow(DECAY, i)), head: 3, lw: 1.2 });
         }
 
         U.text(ctx, 'DPRNN — chemin max = K + T/K = ' + K + ' + ' + S + ' = ' + path + ' pas', m, l2y,

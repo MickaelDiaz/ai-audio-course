@@ -21,8 +21,8 @@
       fréquence <code>f</code> est parfaitement reconstructible si <code>f &lt; f_s/2</code> (la
       <strong>fréquence de Nyquist</strong>). Au-delà, les échantillons deviennent ambigus : ils coïncident
       exactement avec ceux d'une sinusoïde plus grave de fréquence <code>|f − k·f_s|</code>. C'est le
-      <strong>repliement spectral</strong> (aliasing) — dans la visualisation, la courbe rouge passe
-      réellement par les mêmes points que la courbe teal, et rien ne permet de les distinguer après coup.</p>
+      <strong>repliement spectral</strong> (aliasing) — dans la visualisation, la courbe bleue passe
+      réellement par les mêmes points que la courbe corail, et rien ne permet de les distinguer après coup.</p>
       <p>C'est pourquoi l'audio « full-band » utilise <strong>48 kHz</strong> : l'oreille humaine perçoit
       jusqu'à ~20 kHz, donc Nyquist à 24 kHz laisse une bande de transition confortable pour le
       <strong>filtre anti-repliement</strong> placé avant le convertisseur (le CD, à 44,1 kHz, laisse une
@@ -134,7 +134,7 @@
         }
         ctx.stroke(); ctx.globalAlpha = 1;
 
-        // sinusoïde continue (teal), lisse
+        // sinusoïde continue (corail), lisse
         ctx.strokeStyle = palette.voice; ctx.lineWidth = 2;
         ctx.beginPath();
         for (let xi = 0; xi <= ww; xi++) {
@@ -143,15 +143,15 @@
         }
         ctx.stroke();
 
-        // sinusoïde alias reconstruite (rouge) : passe par les mêmes points
+        // sinusoïde alias reconstruite (bleue) : passe par les mêmes points
         if (aliasA > 0.02) {
-          ctx.strokeStyle = palette.red; ctx.lineWidth = 2; ctx.globalAlpha = aliasA;
+          ctx.strokeStyle = palette.blue; ctx.lineWidth = 2; ctx.globalAlpha = aliasA;
           ctx.beginPath();
           for (let xi = 0; xi <= ww; xi++) {
             const y = midY - aliasSig((xi / ww) * WIN) * sc;
             xi === 0 ? ctx.moveTo(wx, y) : ctx.lineTo(wx + xi, y);
           }
-          ctx.stroke(); ctx.globalAlpha = 1;
+          ctx.setLineDash([5, 4]); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
         }
 
         // points d'échantillonnage lumineux, pulsation douce
@@ -172,9 +172,9 @@
           ctx.font = `600 10px ${U.FONT}`;
           const cw = ctx.measureText('ALIASING').width + 14;
           ctx.save(); ctx.globalAlpha = aliasA;
-          chip(ctx, 'ALIASING', wx + ww - cw - 4, wy + 12, { color: palette.red });
+          chip(ctx, 'ALIASING', wx + ww - cw - 4, wy + 12, { color: palette.blue });
           text(ctx, `alias perçu ≈ ${fmt.hz(faTrue)}`, wx + ww - 4, wy + 30,
-            { size: fs1, color: palette.red, align: 'right', mono: true });
+            { size: fs1, color: palette.blue, align: 'right', mono: true });
           ctx.restore();
         }
 
@@ -185,10 +185,10 @@
         ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + aw, ay); ctx.stroke();
 
         const xNy = xOfF(fsSm / 2);
-        ctx.fillStyle = 'rgba(248,113,113,0.08)';     // zone de repliement
+        ctx.fillStyle = 'rgba(96,165,250,0.08)';     // zone de repliement
         ctx.fillRect(xNy, ay - 7, ax + aw - xNy, 14);
         if (!small && ax + aw - xNy > 110) {
-          text(ctx, 'zone de repliement', ax + aw - 4, ay - 10, { size: 9, color: palette.red, align: 'right' });
+          text(ctx, 'zone de repliement', ax + aw - 4, ay - 10, { size: 9, color: palette.blue, align: 'right' });
         }
         // graduations
         const tickStep = axisMax > 20000 ? 10000 : axisMax > 10000 ? 5000 : 2000;
@@ -204,7 +204,7 @@
         text(ctx, small ? 'fs/2' : `Nyquist fs/2 = ${fmt.hz(ctlFs.value / 2)}`,
           Math.min(xNy + 5, ax + aw - (small ? 30 : 130)), ay - 10, { size: fs1 - 1, color: palette.rest });
         // position du signal sur l'axe
-        const dotCol = aliasA > 0.5 ? palette.red : palette.voice;
+        const dotCol = aliasA > 0.5 ? palette.blue : palette.voice;
         glowDot(ctx, xOfF(fSm), ay, 3.4, dotCol);
         text(ctx, 'f', xOfF(fSm), ay + 14, { size: 9, color: dotCol, align: 'center', bold: true });
 

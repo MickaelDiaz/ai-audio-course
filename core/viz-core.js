@@ -5,17 +5,18 @@
 (function () {
   'use strict';
 
-  /* ---------- Palette (thème sombre, cohérente entre modules) ---------- */
+  /* ---------- Palette — « Studio Mono » : coque noir chaud, accent corail ---------- */
   const palette = {
-    bg: '#0b0e14',      // fond page
-    stage: '#0d1117',   // fond canvas
-    panel: '#131a26',   // boîtes / nodes
-    panel2: '#1a2333',
-    grid: 'rgba(148,163,184,0.13)',
-    text: '#e6edf3',
-    dim: '#8b96a5',
-    faint: '#566070',
-    voice: '#2dd4bf',   // voix — teal (constant dans toute l'app)
+    bg: '#0c0c0e',      // fond page — noir chaud
+    stage: '#0e0e11',   // fond canvas
+    panel: '#161619',   // boîtes / nodes
+    panel2: '#1f1f23',
+    grid: 'rgba(255,255,255,0.07)',
+    text: '#f4f2ec',    // blanc cassé chaud
+    dim: '#9b988f',
+    faint: '#605d57',
+    accent: '#ff5c49',  // accent de marque — corail (UI + identité)
+    voice: '#ff5c49',   // voix — corail (= marque ; constant dans toute l'app)
     rest: '#fbbf24',    // musique/effets — ambre
     mix: '#a78bfa',     // mix — violet
     blue: '#60a5fa',
@@ -24,7 +25,7 @@
     green: '#34d399',
     orange: '#fb923c',
     yellow: '#facc15',
-    teal: '#2dd4bf',
+    teal: '#38bdf8',    // (héritage) repointé vers un cyan franc — plus aucun teal-vert
     violet: '#a78bfa',
   };
 

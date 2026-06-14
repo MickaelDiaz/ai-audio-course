@@ -66,11 +66,13 @@ Formatage : `fmt.hz(f), fmt.ms(secondes), fmt.db(d), fmt.pct(p01), fmt.k(n)`.
 Spectrogramme défilant : `new U.Scroller(wPx,hPx,cmapRGB?)` ; `.push(values01)` (index 0 = grave, 1 colonne/appel) ;
 `.draw(ctx,x,y,w,h)`.
 
-## Palette (`Atlas.palette`) — à respecter STRICTEMENT
+## Palette (`Atlas.palette`) — DA « Studio Mono », à respecter STRICTEMENT
 
-`bg #0b0e14, stage #0d1117, panel #131a26, panel2 #1a2333, grid, text #e6edf3, dim #8b96a5, faint #566070`.
-Sémantique audio constante dans toute l'app : **voice/teal `#2dd4bf`**, **rest (musique/effets)/ambre `#fbbf24`**,
-**mix/violet `#a78bfa`**. Divers : `blue #60a5fa, pink #f472b6, red #f87171, green #34d399, orange #fb923c, yellow #facc15`.
+Coque noir chaud + UN accent corail. Neutres : `bg #0c0c0e, stage #0e0e11, panel #161619, panel2 #1f1f23,
+grid, text #f4f2ec, dim #9b988f, faint #605d57`.
+**Accent de marque** : `accent #ff5c49` (corail) — réservé aux moments d'identité/interaction.
+Sémantique audio constante dans toute l'app : **voice/corail `#ff5c49`** (= la marque), **rest (musique/effets)/ambre `#fbbf24`**,
+**mix/violet `#a78bfa`**. Divers : `blue #60a5fa, pink #f472b6, red #f87171, green #34d399, orange #fb923c, yellow #facc15, teal #38bdf8`.
 
 ## Règles de qualité
 

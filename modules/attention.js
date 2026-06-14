@@ -286,7 +286,7 @@
           }
         }
         if (causal) {                                            /* triangle futur : hachuré sombre */
-          ctx.strokeStyle = 'rgba(139,150,165,0.22)'; ctx.lineWidth = 1;
+          ctx.strokeStyle = 'rgba(155,152,143,0.22)'; ctx.lineWidth = 1;
           for (let q = 0; q < T; q++) for (let j = q + 1; j < T; j++) {
             const x = mx + j * cell, y = my + q * cell;
             ctx.fillStyle = 'rgba(8,10,14,0.85)'; ctx.fillRect(x, y, cell - 0.5, cell - 0.5);

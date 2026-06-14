@@ -194,7 +194,7 @@
         U.glowDot(ctx, plotX + plotW, uY + uH / 2 - U.clamp(uNow * uScale, -uH / 2 + 2, uH / 2 - 2), 2.5, palette.blue);
         if (!narrow) U.text(ctx, 'u = ' + uNow.toFixed(2), plotX + plotW - 4, uY - 5, { size: 10, color: palette.blue, align: 'right', mono: true });
 
-        /* 5) Gate sélective — bandeau lumineux teal (s'ouvre/se ferme en direct) */
+        /* 5) Gate sélective — bandeau lumineux corail (s'ouvre/se ferme en direct) */
         U.text(ctx, 'État x(t) ∈ ℝ⁶ — six constantes de temps', plotX + 2, gateY - 5, { size: 11, color: palette.dim });
         if (eSel > 0.02) {
           const gh = gateSpace;
@@ -251,7 +251,7 @@
           }
         }
 
-        /* 7) Bandeau 3 — sortie y(t) (teal) */
+        /* 7) Bandeau 3 — sortie y(t) (corail) */
         U.frame(ctx, plotX, yY, plotW, yH);
         U.text(ctx, 'Sortie y = C·x', plotX + 2, yY - 5, { size: 11, color: palette.dim });
         zeroLine(plotX, yY, plotW, yH);

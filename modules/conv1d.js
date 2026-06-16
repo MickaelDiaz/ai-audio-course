@@ -174,15 +174,21 @@
         ctx.beginPath(); ctx.arc(px(n), yIn(n), g.compact ? 5.5 : 5, 0, TAU); ctx.stroke();
         ctx.restore();
 
-        /* Chip causalité / look-ahead (valeurs vraies), ancrée en haut à droite du panneau */
+        /* Chip causalité / look-ahead. Desktop : en haut à droite du panneau.
+           Mobile : sur SA PROPRE ligne, centrée (st.chipY) — jamais sur la waveform. */
         const la = MID * d;
-        const chSize = fs(g.compact ? 10 : 10);
-        const chy = waveY + (g.compact ? 14 : 12);
-        if (!causal) {
-          const label = `look-ahead = ${la} éch (+${fr(la / SR * 1000, 1)} ms)`;
-          drawChipRight(ctx, label, x0 + plotW, chy, palette.yellow, chSize);
+        const chSize = fs(10);
+        const label = causal ? 'causal : passé seulement → streaming OK'
+                             : `look-ahead = ${la} éch (+${fr(la / SR * 1000, 1)} ms)`;
+        const col = causal ? palette.voice : palette.yellow;
+        if (g.compact) {
+          if (st.chipY != null) {
+            ctx.font = `600 ${chSize}px ${U.FONT}`;
+            const w = ctx.measureText(label).width + 16;
+            U.chip(ctx, label, Math.max(8, (g.W - w) / 2), st.chipY, { color: col, size: chSize });
+          }
         } else {
-          drawChipRight(ctx, 'causal : passé uniquement → streaming OK', x0 + plotW, chy, palette.voice, chSize);
+          drawChipRight(ctx, label, x0 + plotW, waveY + 12, col, chSize);
         }
       }
 
@@ -250,14 +256,20 @@
         U.glowDot(ctx, px(n), U.clamp(yOut(n), outY, outY + outH), 4, palette.voice);
         ctx.restore();
 
-        /* Le détecteur de transitoires fait ressortir la plosive */
+        /* Le détecteur de transitoires fait ressortir la plosive.
+           Desktop : annotation dans le coin haut du panneau. Mobile : légende
+           CENTRÉE sous le panneau (st.plosiveCaptionY) — jamais sur le titre. */
         if (kid === 'tr') {
           const a = fade * U.ease((nF - peakIdx - 6) / 18);
           if (a > 0.02) {
             ctx.save(); ctx.globalAlpha = a;
-            const axL = U.clamp(px(peakIdx), x0 + 70, x0 + plotW - 90);
-            U.text(ctx, 'la plosive ressort !', axL, outY + (g.compact ? 15 : 13), { size: fs(g.compact ? 11 : 11), bold: true, color: palette.rest });
-            U.arrow(ctx, axL - 6, outY + (g.compact ? 13 : 11), px(peakIdx), U.clamp(yOut(peakIdx), outY + 6, outY + outH - 6), { color: palette.rest, head: 5, alpha: a });
+            if (g.compact && st.plosiveCaptionY != null) {
+              U.text(ctx, '↑ la plosive ressort dans la sortie', g.W / 2, st.plosiveCaptionY, { size: fs(11), bold: true, align: 'center', color: palette.rest });
+            } else if (!g.compact) {
+              const axL = U.clamp(px(peakIdx), x0 + 70, x0 + plotW - 90);
+              U.text(ctx, 'la plosive ressort !', axL, outY + 13, { size: fs(11), bold: true, color: palette.rest });
+              U.arrow(ctx, axL - 6, outY + 11, px(peakIdx), U.clamp(yOut(peakIdx), outY + 6, outY + outH - 6), { color: palette.rest, head: 5, alpha: a });
+            }
             ctx.restore();
           }
         }
@@ -350,44 +362,67 @@
         const g = { compact, W, H };
 
         if (compact) {
-          /* ===== MOBILE : empilement vertical, tout agrandi, rien de masqué ===== */
-          const titleY = fs(15);
-          U.text(ctx, `Entrée x[n] — pseudo-parole`, x0, titleY, { size: fs(11.5), color: palette.dim });
-          U.text(ctx, `${N} éch · ${fr(N / SR * 1000, 1)} ms @ 16 kHz`, x0, titleY + fs(13), { size: fs(10.5), color: palette.faint });
-          U.text(ctx, `K=${K} · d=${d} · ${causal ? 'causal' : 'centré'}`, W - 14, titleY, { size: fs(11.5), align: 'right', color: palette.dim, mono: true });
+          /* ===== MOBILE : empilement aéré, animations agrandies, zéro chevauchement =====
+             En-tête sur 2 lignes alignées à GAUCHE (jamais deux textes sur la même
+             ligne qui pourraient se rejoindre). Chaque légende a sa propre ligne. */
+          const titleY = fs(16);
+          U.text(ctx, 'Entrée x[n] — pseudo-parole', x0, titleY, { size: fs(12), color: palette.dim });
+          let sub = `${N} éch · ${fr(N / SR * 1000, 1)} ms · K=${K} · d=${d} · ${causal ? 'causal' : 'centré'}`;
+          let subSize = fs(10.5);
+          ctx.font = subSize + 'px ' + U.MONO;
+          if (ctx.measureText(sub).width > plotW) subSize *= plotW / ctx.measureText(sub).width;
+          U.text(ctx, sub, x0, titleY + fs(14), { size: subSize, mono: true, color: palette.faint });
 
-          /* Découpage vertical : entrée (waveform), poids+Σ, sortie, cône.
-             On répartit la hauteur utile en bandes ; toutes les hauteurs > 0. */
-          const top = titleY + fs(20);
-          const bot = H - 6;
-          const avail = Math.max(120, bot - top);
-          const gapV = fs(20);                       // espace pour titres/Σ entre bandes
+          const headerBot = titleY + fs(14) + fs(10);
+          const bot = H - fs(28);                    // réserve la légende du kernel en bas
+          const gapV = fs(12);
+          const chipRow = fs(22), sigmaRow = fs(22), plosiveRow = fs(20);
 
-          const waveH = U.clamp(avail * 0.20, 70, 150);
-          const barsH = U.clamp(avail * 0.11, 40, 90);
-          const outH = U.clamp(avail * 0.22, 80, 170);
-          const coneH = U.clamp(avail * 0.26, 90, 220);
+          /* Panneaux (les « animations ») = tout l'espace restant, généreux. */
+          const panelsH = Math.max(220, (bot - headerBot) - chipRow - sigmaRow - plosiveRow - gapV * 4);
+          const waveH = Math.max(96, panelsH * 0.27);
+          const barsH = Math.max(52, panelsH * 0.16);
+          const outH = Math.max(96, panelsH * 0.27);
 
-          const waveY = top + fs(4);
-          const barsY = waveY + waveH + gapV;
-          const outY = barsY + barsH + gapV;
-          const coneY = Math.min(outY + outH + gapV + fs(2), bot - coneH);
+          let y = headerBot;
+          const waveY = y;                 y = waveY + waveH;
+          const chipY = y + chipRow / 2;   y = y + chipRow + gapV;
+          const barsY = y;                 y = barsY + barsH + sigmaRow + gapV;
+          const outY = y;                  y = outY + outH;
+          const plosiveCaptionY = y + plosiveRow / 2; y = y + plosiveRow + gapV;
+          const coneY = y;
+          const coneH = Math.max(100, bot - coneY);
 
-          const st = { x0, plotW, waveY, waveH, barsY, barsH, outY, outH, nF, n, fade, d, causal, kid, W, H };
+          const st = { x0, plotW, waveY, waveH, barsY, barsH, outY, outH, nF, n, fade, d, causal, kid, W, H, chipY, plosiveCaptionY };
 
           /* Ligne guide verticale entrée → sortie (avant les panneaux) */
           ctx.save();
-          ctx.globalAlpha = 0.16 * fade; ctx.strokeStyle = palette.mix; ctx.setLineDash([3, 4]);
+          ctx.globalAlpha = 0.14 * fade; ctx.strokeStyle = palette.mix; ctx.setLineDash([3, 4]);
           ctx.beginPath(); ctx.moveTo(px(n), waveY); ctx.lineTo(px(n), outY + outH); ctx.stroke();
           ctx.restore();
 
           drawInput(g, st);
           drawCalc(g, st);
           drawOutput(g, st);
-          drawCone(g, x0 - 8, Math.max(coneY, outY + outH + fs(8)), plotW + 16, coneH, d, causal, t);
+          drawCone(g, x0 - 8, coneY, plotW + 16, coneH, d, causal, t);
 
-          /* Légende du kernel courant, tout en bas */
-          U.text(ctx, KHINT[kid] || '', W / 2, H - fs(4), { size: fs(10), align: 'center', color: palette.dim });
+          /* Légende du kernel courant, en bas, repliée sur 2 lignes max (mesuré à
+             l'exécution → s'adapte à la police réelle de l'appareil). */
+          const hSize = fs(9.5);
+          ctx.font = hSize + 'px ' + U.FONT;
+          const words = (KHINT[kid] || '').split(' ');
+          const lines = []; let line = '';
+          for (const w of words) {
+            const test = line ? line + ' ' + w : w;
+            if (ctx.measureText(test).width > plotW && line) { lines.push(line); line = w; }
+            else line = test;
+          }
+          if (line) lines.push(line);
+          const lh = hSize * 1.25;
+          const startY = H - fs(6) - (Math.min(lines.length, 2) - 1) * lh;
+          for (let i = 0; i < Math.min(lines.length, 2); i++) {
+            U.text(ctx, lines[i], W / 2, startY + i * lh, { size: hSize, align: 'center', color: palette.dim });
+          }
         } else {
           /* ===== DESKTOP / tablette : mise en page d'origine, inchangée ===== */
           const topY = 24, topH = H * 0.50 - topY;

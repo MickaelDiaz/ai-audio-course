@@ -256,12 +256,13 @@ button { font-family: inherit; }
 @media (max-width: 640px) {
   #app { padding: 0 10px 40px; }
 
-  /* Scène en portrait : beaucoup plus de hauteur → les modules empilent
-     leurs panneaux verticalement et agrandissent textes & kernels. */
+  /* Scène quasi plein écran en hauteur sur mobile : les animations
+     respirent (on scrolle pour atteindre les contrôles dessous). */
   .stage-wrap {
-    aspect-ratio: 5 / 7;
-    min-height: 0;
-    max-height: 80vh;
+    aspect-ratio: auto;
+    height: 82vh;
+    min-height: 460px;
+    max-height: 760px;
     border-radius: 11px;
   }
 

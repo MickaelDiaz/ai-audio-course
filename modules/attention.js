@@ -3,6 +3,9 @@
    Self-attention sur 12 frames spectrales réelles : scores Q·K,
    softmax exact, sortie pondérée, matrice T×T, masque causal,
    têtes multiples. Tous les nombres affichés sont calculés.
+   Mise en page responsive : empilée verticalement sur mobile
+   (tokens + liens, barres softmax, sortie pondérée, matrice T×T
+   en grand, coût quadratique), inchangée sur desktop.
    ============================================================ */
 (function () {
   'use strict';
@@ -19,31 +22,32 @@
     icon: '◉',
     summary: 'Q·Kᵀ → softmax → moyenne pondérée : scores réels entre 12 frames spectrales, masque causal et coût T².',
     explain: `
-      <p><strong>Self-attention</strong> : chaque frame audio est projetée en <strong>query</strong>,
-      <strong>key</strong> et <strong>value</strong>. Le score entre les frames <code>i</code> et <code>j</code>
-      est un produit scalaire <code>q·k</code> normalisé (ici : similarité réelle entre colonnes spectrales de
-      16 bins, divisée par une température τ). Le <strong>softmax</strong> transforme ces scores en distribution
+      <p><dfn class="term" data-term="self-attention">Self-attention</dfn> : chaque <dfn class="term" data-term="frame">frame</dfn> audio est projetée en <dfn class="term" data-term="qkv">query,
+      key et value</dfn>. Le <dfn class="term" data-term="attention-score">score</dfn> entre les frames <code>i</code> et <code>j</code>
+      est un <dfn class="term" data-term="dot-product">produit scalaire</dfn> <code>q·k</code> normalisé (ici : similarité réelle entre colonnes spectrales de
+      16 <dfn class="term" data-term="fft-bin">bins</dfn>, divisée par une <dfn class="term" data-term="temperature">température τ</dfn>). Le <dfn class="term" data-term="softmax">softmax</dfn> transforme ces scores en distribution
       de probabilités (Σ = 1), et la sortie est la <strong>moyenne pondérée des values</strong> : chaque frame
       recompose sa représentation à partir de toutes les autres. Tout ce qui s'affiche ici est calculé
       exactement — scores, softmax, vecteur de sortie.</p>
       <p>Ce <strong>contexte global en un saut</strong> explique pourquoi l'attention domine en traitement
-      offline : une frame voisée peut consulter directement une harmonique située 800 ms plus loin, sans passer
-      par une chaîne récurrente. Les <strong>têtes multiples</strong> partitionnent les dimensions (16 = 4×4) :
+      offline : une frame <dfn class="term" data-term="voiced">voisée</dfn> peut consulter directement une <dfn class="term" data-term="harmonique">harmonique</dfn> située 800 ms plus loin, sans passer
+      par une chaîne récurrente. Les <dfn class="term" data-term="multi-head">têtes multiples</dfn> partitionnent les dimensions (16 = 4×4) :
       chaque tête calcule sa propre matrice d'attention sur son sous-espace et se spécialise (graves,
-      fricatives…). C'est la brique des séparateurs état de l'art (<strong>Mel-RoFormer</strong>, BS-RoFormer)
-      et des encodeurs type Whisper / AST.</p>
+      <dfn class="term" data-term="fricative">fricatives</dfn>…). C'est la brique des séparateurs état de l'art (<strong>Mel-RoFormer</strong>, BS-RoFormer)
+      et des <dfn class="term" data-term="encoder-decoder">encodeurs</dfn> type Whisper / AST.</p>
       <p>Le revers : le coût est <strong>quadratique</strong>. T frames → T² paires : 12 frames = 144 paires,
-      mais 1 s d'audio à hop 10 ms = 100 frames → 10 000 paires, et 10 s → 1 000 000. En <strong>streaming</strong>,
-      le futur n'existe pas : le <strong>masque causal</strong> interdit le triangle supérieur de la matrice, et
-      contrairement à un RNN il n'y a <em>pas d'état compact</em> — il faut conserver tout le cache K/V, qui
+      mais 1 s d'audio à <dfn class="term" data-term="hop">hop</dfn> 10 ms = 100 frames → 10 000 paires, et 10 s → 1 000 000. En <dfn class="term" data-term="streaming">streaming</dfn>,
+      le futur n'existe pas : le <dfn class="term" data-term="masking-causal">masque causal</dfn> interdit le triangle supérieur de la matrice, et
+      contrairement à un <dfn class="term" data-term="rnn">RNN</dfn> il n'y a <em>pas d'état compact</em> — il faut conserver tout le <dfn class="term" data-term="kv-cache">cache K/V</dfn>, qui
       grandit avec la durée.</p>
-      <p>Sur NPU embarqué, le <code>softmax</code> (exponentielles, normalisations) et les matmuls dynamiques de
-      l'attention retombent souvent en <strong>fallback CPU</strong> : c'est le coût caché. D'où les compromis
-      temps réel : fenêtres d'attention locales, attention linéaire, ou hybrides conv/RNN qui gardent un état
+      <p>Sur <dfn class="term" data-term="npu">NPU</dfn> embarqué, le <code>softmax</code> (exponentielles, normalisations) et les matmuls dynamiques de
+      l'attention retombent souvent en <dfn class="term" data-term="cpu-fallback">fallback CPU</dfn> : c'est le coût caché. D'où les compromis
+      temps réel : <dfn class="term" data-term="local-attention">fenêtres d'attention locales</dfn>, <dfn class="term" data-term="linear-attention">attention linéaire</dfn>, ou hybrides conv/RNN qui gardent un état
       borné.</p>`,
 
     init(stage) {
       const ctx = stage.ctx;
+      const fs = (n) => stage.fs(n);   // taille de police lisible (agrandie sur mobile)
 
       /* ---------- features précalculées : T frames × D bins (rfftMag sur gen.speech) ---------- */
       const SR = 16000, N = 512, HOP = 0.07, T0 = 0.31;
@@ -102,8 +106,8 @@
       ];
       const costNarrow = [
         `T = ${T} → ${fi(T * T)} paires`,
-        `1 s → ${fi(T1 * T1)}`,
-        `10 s → ${fi(T10 * T10)}`,
+        `1 s → T = ${fi(T1)} → ${fi(T1 * T1)}`,
+        `10 s → ${fi(T10 * T10)} paires`,
       ];
 
       /* ---------- contrôles ---------- */
@@ -141,66 +145,63 @@
         }
       }
 
-      stage.onFrame((t, dt) => {
-        stage.clear();
-        ensure();
-        const Wd = stage.W, Hd = stage.H;
-        const m = 12, narrow = Wd < 560;
+      /* ============================================================
+         Helpers de dessin — réutilisés par les deux mises en page.
+         Chacun prend ses coordonnées/tailles ; aucune supposition de
+         ratio. Toutes les tailles passent par fs(...) pour rester
+         lisibles sur mobile. `sz` est un facteur d'échelle local
+         (1 sur desktop, plus grand sur mobile via fs).
+         ============================================================ */
+
+      /* État de frame partagé, calculé une fois par onFrame */
+      function frameState(t, dt) {
         const causal = ctlCausal.value, h = +ctlHeads.value || 1;
-
-        /* ---- cycle : ~3 s par query, easé ---- */
         const cyc = Math.floor(t / CYC), p = (t % CYC) / CYC;
-        const qi = cyc % T;
-        const revealed = Math.min(T, cyc);                       // lignes de matrice déjà remplies
-        const lineIn = U.ease(Math.min(1, p / 0.35));            // apparition des liens
-        const rowFill = U.smoothstep((p - 0.2) / 0.55);          // remplissage de la ligne courante
+        const qi = ((cyc % T) + T) % T;
+        const revealed = Math.min(T, Math.max(0, cyc));
+        const lineIn = U.ease(Math.min(1, p / 0.35));
+        const rowFill = U.smoothstep((p - 0.2) / 0.55);
 
-        /* distribution affichée : suit la query avec lissage (la rangée de barres "vit") */
+        /* distribution affichée : suit la query avec lissage */
         const kS = 1 - Math.exp(-dt * 6);
         let sumW = 0;
         for (let j = 0; j < T; j++) { dispW[j] += (Wfull[qi * T + j] - dispW[j]) * kS; sumW += dispW[j]; }
         for (let d = 0; d < D; d++) {
           let s = 0;
           for (let j = 0; j < T; j++) s += dispW[j] * disp[j * D + d];
-          outVec[d] = s;                                          // vraie moyenne pondérée
+          outVec[d] = s;
         }
+        return { causal, h, qi, revealed, lineIn, rowFill, sumW };
+      }
 
-        /* ---- layout (tout depuis W/H, chaque frame) ---- */
-        const outW = U.clamp(Wd * 0.055, 26, 42);
-        const tokArea = Wd - m * 2 - outW - 18;
-        const tokW = tokArea / T, boxW = Math.max(8, tokW - 4);
-        const yTok = 26;
-        const tokH = U.clamp(Hd * 0.16, 44, 72);
-        const gapH = U.clamp(Hd * 0.11, 30, 60);
-        const yBars = yTok + tokH + gapH;
-        const barH = U.clamp(Hd * 0.07, 18, 36);
-        const yBot = yBars + barH + 24;
-        const botH = Hd - yBot - m;
-        const bx = (i) => m + i * tokW + (tokW - boxW) / 2;
-        const cx = (i) => m + i * tokW + tokW / 2;
+      /* ---- Rangée de tokens (colonnes spectrales) + liens query→keys + barres softmax ----
+         Dessine, dans [x, x+areaW], les T tokens à yTok (hauteur tokH), les liens
+         courbes en dessous (gapH), puis les barres softmax (yBars, hauteur barH).
+         Renvoie les helpers de position bx/cx et la largeur réelle d'une case. */
+      function drawTokenRow(st, x, areaW, yTok, tokH, gapH, yBars, barH, fsz) {
+        const { causal, qi, lineIn } = st;
+        const tokW = areaW / T;
+        const boxW = Math.max(6, tokW - Math.max(2, tokW * 0.12));
+        const bx = (i) => x + i * tokW + (tokW - boxW) / 2;
+        const cx = (i) => x + i * tokW + tokW / 2;
 
-        /* ---- titre + chip causal ---- */
-        U.text(ctx, narrow ? `T = ${T} frames audio` : `T = ${T} frames audio — colonnes spectrales ${D} bins (rfftMag, parole)`,
-          m, 16, { size: 11, color: palette.dim });
-        if (causal) U.chip(ctx, 'streaming ⇒ causal obligatoire', Wd - m - (narrow ? 168 : 186), 12, { color: palette.teal });
-
-        /* ---- tokens : colonnes spectrales dans des cases arrondies ---- */
+        /* tokens */
         for (let i = 0; i < T; i++) {
-          const x = bx(i), isQ = i === qi;
+          const xi = bx(i), isQ = i === qi;
           ctx.save();
           if (isQ) { ctx.shadowColor = palette.voice; ctx.shadowBlur = 13; }
-          U.roundRect(ctx, x, yTok, boxW, tokH, 5);
+          U.roundRect(ctx, xi, yTok, boxW, tokH, 5);
           ctx.fillStyle = palette.panel; ctx.fill();
           ctx.shadowBlur = 0;
           ctx.strokeStyle = isQ ? palette.voice : palette.grid;
           ctx.lineWidth = isQ ? 1.6 : 1; ctx.stroke();
           ctx.restore();
-          drawColumn(x + 2, yTok + 2, boxW - 4, tokH - 4, i * D);
-          if (boxW >= 16) U.text(ctx, isQ ? 'query' : 'f' + i, cx(i), yTok - 4,
-            { size: 9, align: 'center', color: isQ ? palette.voice : palette.faint, bold: isQ });
+          drawColumn(xi + 2, yTok + 2, boxW - 4, tokH - 4, i * D);
+          if (boxW >= 13) U.text(ctx, isQ ? 'query' : 'f' + i, cx(i), yTok - 4,
+            { size: fsz(9), align: 'center', color: isQ ? palette.voice : palette.faint, bold: isQ });
         }
 
-        /* ---- liens courbes query → keys (épaisseur + alpha = softmax réel) ---- */
+        /* liens courbes query → keys (épaisseur + alpha = softmax réel) */
         const limQ = causal ? qi : T - 1;
         ctx.save();
         ctx.strokeStyle = palette.voice;
@@ -217,25 +218,26 @@
         }
         ctx.restore();
 
-        /* ---- barres softmax sous les tokens ---- */
+        /* barres softmax */
         let maxW = 1e-6, jMax = 0;
         for (let j = 0; j < T; j++) if (dispW[j] > maxW) { maxW = dispW[j]; jMax = j; }
         ctx.strokeStyle = palette.grid; ctx.beginPath();
-        ctx.moveTo(m, yBars + barH); ctx.lineTo(m + tokArea, yBars + barH); ctx.stroke();
+        ctx.moveTo(x, yBars + barH); ctx.lineTo(x + areaW, yBars + barH); ctx.stroke();
         for (let j = 0; j < T; j++) {
           const hb = (dispW[j] / maxW) * barH;
           ctx.globalAlpha = j <= limQ || !causal ? 0.92 : 0.25;
           ctx.fillStyle = j === qi ? palette.voice : (causal && j > qi ? palette.faint : palette.blue);
-          ctx.fillRect(bx(j), yBars + barH - hb, boxW, hb);
+          ctx.fillRect(bx(j), yBars + barH - Math.max(0, hb), boxW, Math.max(0, hb));
           ctx.globalAlpha = 1;
         }
-        U.text(ctx, U.fmt.pct(dispW[jMax]), cx(jMax), yBars - 3, { size: 9, align: 'center', color: palette.voice, mono: true });
-        if (!narrow) U.text(ctx, 'poids = softmax( q·k / τ )', m, yBars + barH + 13, { size: 10, color: palette.dim, mono: true });
-        U.text(ctx, `Σ wⱼ = ${Math.round(sumW * 100)} %`, m + tokArea, yBars + barH + 13,
-          { size: 10, align: 'right', color: palette.dim, mono: true });
+        U.text(ctx, U.fmt.pct(dispW[jMax]), cx(jMax), yBars - 3, { size: fsz(9), align: 'center', color: palette.voice, mono: true });
+        return { bx, cx, boxW, jMax };
+      }
 
-        /* ---- vecteur de sortie (moyenne pondérée réelle) + contributions ---- */
-        const ox = Wd - m - outW;
+      /* ---- Vecteur de sortie (moyenne pondérée réelle) ----
+         Dessine la case sortie à (ox, yTok) de taille (outW, tokH).
+         Renvoie rien ; les contributions top-k sont dessinées par drawContribs. */
+      function drawOutputBox(ox, yTok, outW, tokH, fsz) {
         ctx.save();
         ctx.shadowColor = palette.mix; ctx.shadowBlur = 10;
         U.roundRect(ctx, ox, yTok, outW, tokH, 5);
@@ -243,37 +245,16 @@
         ctx.strokeStyle = palette.mix; ctx.lineWidth = 1.4; ctx.stroke();
         ctx.restore();
         drawColumn(ox + 2, yTok + 2, outW - 4, tokH - 4, 0, outVec);
-        U.text(ctx, 'sortie', ox + outW / 2, yTok - 4, { size: 9, align: 'center', color: palette.mix, bold: true });
-        U.text(ctx, 'Σ wⱼ·vⱼ', ox + outW / 2, yTok + tokH + 12, { size: 9, align: 'center', color: palette.faint, mono: true });
-        /* top contributions (triées sur la vraie ligne softmax) */
-        order.sort((a, b) => Wfull[qi * T + b] - Wfull[qi * T + a]);
-        let cy = yTok + tokH + 26;
-        for (let r = 0; r < 3; r++) {
-          const j = order[r], w = Wfull[qi * T + j];
-          if (w < 0.05) break;
-          U.text(ctx, `f${j} · ${Math.round(w * 100)} %`, ox + outW, cy, { size: 9, align: 'right', color: palette.rest, mono: true });
-          ctx.strokeStyle = palette.rest; ctx.globalAlpha = 0.8 * lineIn; ctx.lineWidth = 1;
-          U.roundRect(ctx, bx(j) - 1.5, yTok - 1.5, boxW + 3, tokH + 3, 6); ctx.stroke();
-          ctx.globalAlpha = 1;
-          cy += 12;
-        }
+        U.text(ctx, 'sortie', ox + outW / 2, yTok - 4, { size: fsz(9), align: 'center', color: palette.mix, bold: true });
+        U.text(ctx, 'Σ wⱼ·vⱼ', ox + outW / 2, yTok + tokH + fsz(12), { size: fsz(9), align: 'center', color: palette.faint, mono: true });
+      }
 
-        /* ---- matrice d'attention T×T (remplie ligne par ligne au fil des cycles) ---- */
-        const mLeft = m + (narrow ? 12 : 16);
-        const showMinis = h > 1 && !narrow;
-        const readW = narrow ? 150 : 230;
-        const unitsX = T * (1 + (showMinis ? h * 0.42 : 0));
-        const cellX = (Wd - m - mLeft - readW - 16 - (showMinis ? h * 10 + 8 : 0)) / unitsX;
-        const cell = U.clamp(Math.min((botH - 22) / T, cellX), 4, 19);
-        const matW = cell * T, mx = mLeft, my = yBot + 14;
-
-        U.text(ctx, narrow ? 'attention T×T' : `matrice d'attention ${T}×${T}`, mx, yBot + 6, { size: 10, color: palette.dim });
-        U.text(ctx, 'key →', mx + matW, yBot + 6, { size: 9, align: 'right', color: palette.faint });
-        ctx.save();
-        ctx.translate(mx - 6, my + matW / 2); ctx.rotate(-Math.PI / 2);
-        U.text(ctx, 'query ↓', 0, 0, { size: 9, align: 'center', color: palette.faint });
-        ctx.restore();
-
+      /* ---- Matrice d'attention T×T (remplie ligne par ligne) ----
+         Dessinée dans une boîte (mx, my) avec cellule `cell` (>0 garanti).
+         Surligne la ligne de la query courante ; gère le masque causal. */
+      function drawMatrix(st, mx, my, cell) {
+        const { causal, qi, revealed, rowFill } = st;
+        const matW = cell * T;
         ctx.fillStyle = palette.panel; ctx.fillRect(mx, my, matW, matW);
         const jReveal = Math.floor(rowFill * T + 1e-4);
         for (let q = 0; q < T; q++) {
@@ -297,39 +278,203 @@
         ctx.strokeRect(mx - 1, my + qi * cell - 1, matW + 2, cell + 1.5);  // ligne de la query courante
         ctx.globalAlpha = 1;
         ctx.strokeStyle = palette.grid; ctx.strokeRect(mx, my, matW, matW);
+        return matW;
+      }
 
-        /* ---- miniatures des têtes (vrais calculs par sous-vecteurs) ---- */
-        let rx = mx + matW + 18;
-        if (showMinis) {
-          const mc = Math.max(2, Math.floor(cell * 0.42)), mw = mc * T;
-          for (let k = 0; k < h; k++) {
-            const hx = rx + k * (mw + 10);
-            ctx.fillStyle = palette.panel; ctx.fillRect(hx, my, mw, mw);
-            for (let q = 0; q < T; q++) {
-              if (!(q < revealed || revealed === T || q === qi)) continue;
-              const nC = (q < revealed || revealed === T) ? T : jReveal;
-              for (let j = 0; j < nC; j++) {
-                if (causal && j > q) continue;
-                ctx.fillStyle = U.viridis(Math.sqrt(Wheads[k][q * T + j]));
-                ctx.fillRect(hx + j * mc, my + q * mc, mc, mc);
-              }
+      /* ---- Miniatures des têtes (vrais calculs par sous-vecteurs) ----
+         Dessine h miniatures à droite de rx, taille de cellule `mc` (>0). */
+      function drawHeads(st, rx, my, mc) {
+        const { causal, h, qi, revealed, rowFill } = st;
+        const mw = mc * T;
+        const jReveal = Math.floor(rowFill * T + 1e-4);
+        for (let k = 0; k < h; k++) {
+          const hx = rx + k * (mw + 10);
+          ctx.fillStyle = palette.panel; ctx.fillRect(hx, my, mw, mw);
+          for (let q = 0; q < T; q++) {
+            if (!(q < revealed || revealed === T || q === qi)) continue;
+            const nC = (q < revealed || revealed === T) ? T : jReveal;
+            for (let j = 0; j < nC; j++) {
+              if (causal && j > q) continue;
+              ctx.fillStyle = U.viridis(Math.sqrt(Wheads[k][q * T + j]));
+              ctx.fillRect(hx + j * mc, my + q * mc, mc, mc);
             }
-            ctx.strokeStyle = palette.grid; ctx.strokeRect(hx, my, mw, mw);
-            U.text(ctx, `tête ${k + 1}`, hx + mw / 2, my + mw + 11, { size: 9, align: 'center', color: palette.faint });
           }
-          rx += h * (mw + 10) + 8;
+          ctx.strokeStyle = palette.grid; ctx.strokeRect(hx, my, mw, mw);
+          U.text(ctx, `tête ${k + 1}`, hx + mw / 2, my + mw + 11, { size: 9, align: 'center', color: palette.faint });
         }
+        return h * (mw + 10);
+      }
 
-        /* ---- readout : coût quadratique (valeurs calculées) ---- */
-        const lines = narrow ? costNarrow : costFull;
-        const lh = narrow ? 13 : 16, fs = narrow ? 9 : 11;
-        U.text(ctx, 'Coût quadratique', rx, my + 4, { size: narrow ? 11 : 12, bold: true, color: palette.text });
-        for (let i = 0; i < lines.length; i++)
-          U.text(ctx, lines[i], rx, my + 4 + (i + 1) * lh + 2, { size: fs, color: i === 0 ? palette.dim : palette.rest, mono: true });
-        const ny = my + 4 + 4 * lh + 8;
-        if (ny + lh < Hd - 2) {
-          U.text(ctx, narrow ? 'softmax : souvent fallback CPU' : 'softmax/attention : souvent fallback CPU sur', rx, ny, { size: fs, color: palette.orange });
-          U.text(ctx, narrow ? 'sur NPU embarqué — coût caché' : 'NPU embarqué — le coût caché', rx, ny + lh - 2, { size: fs, color: palette.orange });
+      stage.onFrame((t, dt) => {
+        stage.clear();
+        ensure();
+        const Wd = stage.W, Hd = stage.H;
+        const st = frameState(t, dt);
+        const { causal, h, qi, lineIn, sumW } = st;
+
+        if (stage.compact) {
+          /* ===================================================================
+             MOBILE — empilement vertical. On profite de la hauteur :
+             1) titre        2) rangée tokens + liens + barres softmax
+             3) sortie pondérée (en grand, centrée)
+             4) matrice T×T en GRAND, pleine largeur
+             5) coût quadratique (3 lignes lisibles)
+             =================================================================== */
+          const m = 12;
+          const fsz = (n) => fs(n);
+
+          /* ---- 1) titre ---- */
+          U.text(ctx, `T = ${T} frames audio · ${D} bins`, m, fs(15),
+            { size: fs(12), color: palette.dim });
+          if (causal) U.chip(ctx, 'streaming ⇒ causal', Wd - m - fs(132), fs(11),
+            { color: palette.teal, size: fs(10) });
+
+          /* ---- 2) rangée tokens (pleine largeur) ---- */
+          const areaW = Wd - 2 * m;
+          const yTok = fs(15) + fs(20);
+          const tokH = U.clamp(Hd * 0.13, 40, 76);
+          const gapH = U.clamp(Hd * 0.075, 22, 48);
+          const yBars = yTok + tokH + gapH;
+          const barH = U.clamp(Hd * 0.05, 16, 34);
+          const tr = drawTokenRow(st, m, areaW, yTok, tokH, gapH, yBars, barH, fsz);
+          U.text(ctx, 'poids = softmax( q·k / τ )', m, yBars + barH + fs(13),
+            { size: fs(10.5), color: palette.dim, mono: true });
+          U.text(ctx, `Σ wⱼ = ${Math.round(sumW * 100)} %`, m + areaW, yBars + barH + fs(13),
+            { size: fs(10.5), align: 'right', color: palette.dim, mono: true });
+
+          /* ---- 3) sortie pondérée (centrée sous les barres) ---- */
+          const outW = U.clamp(Wd * 0.16, 40, 84);
+          const ySec = yBars + barH + fs(13) + fs(8);
+          const outH = U.clamp(Hd * 0.11, 36, 64);
+          const ox = (Wd - outW) / 2;
+          drawOutputBox(ox, ySec, outW, outH, fsz);
+          /* top contributions à droite, légende à gauche */
+          order.sort((a, b) => Wfull[qi * T + b] - Wfull[qi * T + a]);
+          U.text(ctx, 'recompose la query :', m, ySec + fs(6),
+            { size: fs(10.5), color: palette.dim });
+          let cyc2 = ySec + fs(6) + fs(15);
+          for (let r = 0; r < 3; r++) {
+            const j = order[r], w = Wfull[qi * T + j];
+            if (w < 0.05) break;
+            U.text(ctx, `f${j} · ${Math.round(w * 100)} %`, m + fs(4), cyc2,
+              { size: fs(11), color: palette.rest, mono: true });
+            ctx.strokeStyle = palette.rest; ctx.globalAlpha = 0.8 * lineIn; ctx.lineWidth = 1;
+            U.roundRect(ctx, tr.bx(j) - 1.5, yTok - 1.5, tr.boxW + 3, tokH + 3, 6); ctx.stroke();
+            ctx.globalAlpha = 1;
+            cyc2 += fs(14);
+          }
+
+          /* ---- 4) matrice T×T en grand, pleine largeur (au-dessus du coût) ---- */
+          const costLines = costNarrow;
+          const costFs = fs(10.5), costLh = fs(14.5);
+          const costH = costLines.length * costLh + fs(8) + 2 * costLh;  // titre + lignes + 2 lignes NPU
+          const matBottom = Hd - m - costH;
+          const matTop = ySec + outH + fs(20);
+          const titleH = fs(16);
+          /* place pour la matrice carrée : limitée par largeur ET hauteur dispo */
+          const availH = Math.max(0, matBottom - matTop - titleH);
+          const availW = Wd - 2 * m;
+          const cell = Math.max(4, Math.min((availW) / T, availH / T, 26));
+          const matW = cell * T;
+          const mx = (Wd - matW) / 2;
+          const my = matTop + titleH;
+          U.text(ctx, `matrice d'attention ${T}×${T}`, mx, matTop + fs(11),
+            { size: fs(11.5), color: palette.dim });
+          U.text(ctx, 'key →', mx + matW, matTop + fs(11),
+            { size: fs(9.5), align: 'right', color: palette.faint });
+          ctx.save();
+          ctx.translate(mx - fs(6), my + matW / 2); ctx.rotate(-Math.PI / 2);
+          U.text(ctx, 'query ↓', 0, 0, { size: fs(9.5), align: 'center', color: palette.faint });
+          ctx.restore();
+          drawMatrix(st, mx, my, cell);
+
+          /* ---- 5) coût quadratique (3 lignes + NPU) ---- */
+          let cyCost = matBottom + costLh;
+          U.text(ctx, 'Coût quadratique', m, cyCost, { size: fs(12), bold: true, color: palette.text });
+          for (let i = 0; i < costLines.length; i++)
+            U.text(ctx, costLines[i], m, cyCost + (i + 1) * costLh, { size: costFs, color: i === 0 ? palette.dim : palette.rest, mono: true });
+          const ny = cyCost + (costLines.length + 1) * costLh + fs(2);
+          U.text(ctx, 'softmax : souvent fallback CPU', m, ny, { size: costFs, color: palette.orange });
+          U.text(ctx, 'sur NPU embarqué — coût caché', m, ny + costLh - fs(2), { size: costFs, color: palette.orange });
+
+        } else {
+          /* ===================================================================
+             DESKTOP / tablette (≥ 560) — disposition inchangée.
+             =================================================================== */
+          const m = 12, narrow = Wd < 720;
+          const fsz = (n) => n;   // pas d'agrandissement
+
+          /* layout (tout depuis W/H, chaque frame) */
+          const outW = U.clamp(Wd * 0.055, 26, 42);
+          const areaW = Wd - m * 2 - outW - 18;
+          const yTok = 26;
+          const tokH = U.clamp(Hd * 0.16, 44, 72);
+          const gapH = U.clamp(Hd * 0.11, 30, 60);
+          const yBars = yTok + tokH + gapH;
+          const barH = U.clamp(Hd * 0.07, 18, 36);
+          const yBot = yBars + barH + 24;
+          const botH = Hd - yBot - m;
+
+          /* titre + chip causal */
+          U.text(ctx, narrow ? `T = ${T} frames audio` : `T = ${T} frames audio — colonnes spectrales ${D} bins (rfftMag, parole)`,
+            m, 16, { size: 11, color: palette.dim });
+          if (causal) U.chip(ctx, 'streaming ⇒ causal obligatoire', Wd - m - (narrow ? 168 : 186), 12, { color: palette.teal });
+
+          /* tokens + liens + barres softmax */
+          const tr = drawTokenRow(st, m, areaW, yTok, tokH, gapH, yBars, barH, fsz);
+          if (!narrow) U.text(ctx, 'poids = softmax( q·k / τ )', m, yBars + barH + 13, { size: 10, color: palette.dim, mono: true });
+          U.text(ctx, `Σ wⱼ = ${Math.round(sumW * 100)} %`, m + areaW, yBars + barH + 13,
+            { size: 10, align: 'right', color: palette.dim, mono: true });
+
+          /* vecteur de sortie + contributions */
+          const ox = Wd - m - outW;
+          drawOutputBox(ox, yTok, outW, tokH, fsz);
+          order.sort((a, b) => Wfull[qi * T + b] - Wfull[qi * T + a]);
+          let cy = yTok + tokH + 26;
+          for (let r = 0; r < 3; r++) {
+            const j = order[r], w = Wfull[qi * T + j];
+            if (w < 0.05) break;
+            U.text(ctx, `f${j} · ${Math.round(w * 100)} %`, ox + outW, cy, { size: 9, align: 'right', color: palette.rest, mono: true });
+            ctx.strokeStyle = palette.rest; ctx.globalAlpha = 0.8 * lineIn; ctx.lineWidth = 1;
+            U.roundRect(ctx, tr.bx(j) - 1.5, yTok - 1.5, tr.boxW + 3, tokH + 3, 6); ctx.stroke();
+            ctx.globalAlpha = 1;
+            cy += 12;
+          }
+
+          /* matrice d'attention T×T + miniatures des têtes */
+          const mLeft = m + (narrow ? 12 : 16);
+          const showMinis = h > 1 && !narrow;
+          const readW = narrow ? 150 : 230;
+          const unitsX = T * (1 + (showMinis ? h * 0.42 : 0));
+          const cellX = (Wd - m - mLeft - readW - 16 - (showMinis ? h * 10 + 8 : 0)) / unitsX;
+          const cell = U.clamp(Math.min((botH - 22) / T, cellX), 4, 19);
+          const mx = mLeft, my = yBot + 14;
+
+          U.text(ctx, narrow ? 'attention T×T' : `matrice d'attention ${T}×${T}`, mx, yBot + 6, { size: 10, color: palette.dim });
+          U.text(ctx, 'key →', mx + cell * T, yBot + 6, { size: 9, align: 'right', color: palette.faint });
+          ctx.save();
+          ctx.translate(mx - 6, my + cell * T / 2); ctx.rotate(-Math.PI / 2);
+          U.text(ctx, 'query ↓', 0, 0, { size: 9, align: 'center', color: palette.faint });
+          ctx.restore();
+          const matW = drawMatrix(st, mx, my, cell);
+
+          let rx = mx + matW + 18;
+          if (showMinis) {
+            const mc = Math.max(2, Math.floor(cell * 0.42));
+            rx += drawHeads(st, rx, my, mc) + 8;
+          }
+
+          /* readout : coût quadratique (valeurs calculées) */
+          const lines = narrow ? costNarrow : costFull;
+          const lh = narrow ? 13 : 16, fz = narrow ? 9 : 11;
+          U.text(ctx, 'Coût quadratique', rx, my + 4, { size: narrow ? 11 : 12, bold: true, color: palette.text });
+          for (let i = 0; i < lines.length; i++)
+            U.text(ctx, lines[i], rx, my + 4 + (i + 1) * lh + 2, { size: fz, color: i === 0 ? palette.dim : palette.rest, mono: true });
+          const ny = my + 4 + 4 * lh + 8;
+          if (ny + lh < Hd - 2) {
+            U.text(ctx, narrow ? 'softmax : souvent fallback CPU' : 'softmax/attention : souvent fallback CPU sur', rx, ny, { size: fz, color: palette.orange });
+            U.text(ctx, narrow ? 'sur NPU embarqué — coût caché' : 'NPU embarqué — le coût caché', rx, ny + lh - 2, { size: fz, color: palette.orange });
+          }
         }
       });
     },

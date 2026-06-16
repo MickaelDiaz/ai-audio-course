@@ -401,6 +401,19 @@
         ctx.fillStyle = color || palette.stage;
         ctx.fillRect(0, 0, stage.W, stage.H);
       },
+      /* ---------- Responsive : aides communes à tous les modules ----------
+         compact  : petit écran (téléphone) → empiler verticalement, masquer le
+                    superflu, élargir les éléments.
+         portrait : la scène est plus haute que large (mobile en mode portrait).
+         fs(base) : taille de police « lisible ». Inchangée ≥ 560 px ; agrandie
+                    en douceur en dessous pour rester lisible dans le métro. */
+      get compact() { return stage.W < 560; },
+      get portrait() { return stage.H >= stage.W; },
+      fs(base) {
+        const W = stage.W;
+        if (W >= 560) return base;
+        return base * Math.min(1.42, Math.pow(560 / Math.max(300, W), 0.6));
+      },
       addSlider(o) {
         const row = document.createElement('label');
         row.className = 'ctl';
@@ -481,6 +494,7 @@
       let dt = (now - last) / 1000;
       last = now;
       if (dt > 0.05) dt = 0.05;
+      if (dt < 0) dt = 0; // horloge non monotone (1re frame, retour d'onglet) → jamais de temps négatif
       if (stage.paused) dt = 0;
       dt *= stage.speed;
       stage.t += dt;
@@ -507,6 +521,10 @@
     };
   }
 
-  window.Atlas = { register, modules, byId, palette, U, mount };
+  /* ---------- Glossaire (rempli par core/glossary.js et les modules) ---------- */
+  const glossary = {};
+  function defineTerms(obj) { if (obj) Object.assign(glossary, obj); }
+
+  window.Atlas = { register, modules, byId, palette, U, mount, glossary, defineTerms };
   window.AtlasRegister = register;
 })();

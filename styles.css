@@ -255,8 +255,146 @@ button { font-family: inherit; }
 
 @media (max-width: 640px) {
   #app { padding: 0 10px 40px; }
-  .stage-wrap { min-height: 300px; border-radius: 11px; }
-  .ctl { padding: 7px 10px; }
-  .ctl input[type='range'] { width: 105px; }
-  .explain { padding: 16px; font-size: 14px; }
+
+  /* Scène en portrait : beaucoup plus de hauteur → les modules empilent
+     leurs panneaux verticalement et agrandissent textes & kernels. */
+  .stage-wrap {
+    aspect-ratio: 5 / 7;
+    min-height: 0;
+    max-height: 80vh;
+    border-radius: 11px;
+  }
+
+  /* Barre du haut : le titre passe en pleine largeur sur sa propre ligne
+     et n'est plus tronqué (jusqu'à 2 lignes). */
+  .topbar { flex-wrap: wrap; gap: 8px 10px; padding: 9px 0; }
+  .topbar h2 {
+    order: 5; flex-basis: 100%;
+    white-space: normal; overflow: visible; text-overflow: clip;
+    font-size: 17px; line-height: 1.22;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  }
+  .topbar .cat-tag { order: 4; }
+  .toolbar { order: 3; margin-left: auto; }
+
+  /* Contrôles : rangées pleine largeur, curseurs étirés, cibles tactiles. */
+  .controls { gap: 9px; padding: 14px 2px 4px; }
+  .ctl { flex: 1 1 100%; padding: 10px 13px; font-size: 14px; }
+  .ctl-name { font-size: 13.5px; }
+  .ctl-val { font-size: 13px; min-width: 56px; }
+  .ctl input[type='range'] { flex: 1 1 auto; width: auto; height: 6px; }
+  .ctl input[type='range']::-webkit-slider-thumb { width: 24px; height: 24px; }
+  .ctl input[type='range']::-moz-range-thumb { width: 22px; height: 22px; }
+  .ctl select { font-size: 14px; padding: 7px 9px; }
+  .ctl-toggle .switch { width: 42px; height: 24px; }
+  .ctl-toggle .switch::after { width: 18px; height: 18px; }
+  .ctl-toggle input:checked + .switch::after { left: 20px; }
+  .ctl-btn { padding: 11px 18px; font-size: 13.5px; }
+
+  /* Lecture confortable dans le métro. */
+  .explain { padding: 17px 16px; font-size: 15.5px; line-height: 1.62; }
+  .explain h2 { font-size: 14px; }
+  .explain code { font-size: 13.5px; }
+  .mod-nav a { font-size: 14px; padding: 13px 15px; }
 }
+
+/* ============ Termes du glossaire (dans les explications) ============ */
+.term {
+  font-style: normal;
+  color: var(--text);
+  border-bottom: 1px dotted color-mix(in srgb, var(--accent) 75%, transparent);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.12s, border-color 0.12s;
+}
+.term:hover, .term:focus-visible { color: var(--accent); border-bottom-color: var(--accent); outline: none; }
+.term:focus-visible { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent); border-radius: 3px; }
+
+.term-hint {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  color: var(--faint);
+}
+.term-hint .term-hint-dot {
+  border-bottom: 1px dotted var(--accent); color: var(--text);
+}
+
+/* ============ Popover de définition ============ */
+.term-pop-backdrop {
+  position: fixed; inset: 0; z-index: 49;
+  background: transparent;
+}
+.term-pop {
+  position: fixed; z-index: 50;
+  max-width: 330px; width: max-content;
+  background: var(--panel2);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 13px;
+  padding: 14px 16px 15px;
+  box-shadow: 0 16px 48px -10px rgba(0, 0, 0, 0.7);
+  color: var(--text);
+  animation: tp-in 0.13s ease;
+}
+@keyframes tp-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.term-pop .tp-term { font-weight: 700; font-size: 15px; margin: 0 26px 6px 0; color: var(--accent); letter-spacing: -0.2px; }
+.term-pop .tp-def { margin: 0; font-size: 14px; line-height: 1.55; color: #c8d0da; }
+.term-pop .tp-more {
+  display: inline-block; margin-top: 11px;
+  font-size: 12.5px; font-weight: 600; color: var(--dim);
+}
+.term-pop .tp-more:hover { color: var(--accent); }
+.term-pop .tp-close {
+  position: absolute; top: 7px; right: 8px;
+  width: 28px; height: 28px; border: none; background: transparent;
+  color: var(--dim); font-size: 19px; line-height: 1; cursor: pointer; border-radius: 7px;
+}
+.term-pop .tp-close:hover { color: var(--text); background: rgba(255, 255, 255, 0.07); }
+
+@media (max-width: 640px) {
+  /* En bas d'écran : feuille modale, facile à lire et à fermer au pouce. */
+  .term-pop-backdrop { background: rgba(0, 0, 0, 0.45); }
+  .term-pop {
+    left: 8px; right: 8px; bottom: 8px; top: auto !important;
+    max-width: none; width: auto;
+    padding: 18px 18px calc(16px + var(--sab));
+    border-radius: 18px;
+    animation: tp-up 0.18s ease;
+  }
+  .term-pop .tp-term { font-size: 17px; }
+  .term-pop .tp-def { font-size: 15.5px; line-height: 1.6; }
+  .term-pop .tp-more { font-size: 14px; margin-top: 13px; }
+  .term-pop .tp-close { width: 34px; height: 34px; font-size: 22px; top: 9px; right: 10px; }
+}
+@keyframes tp-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
+/* ============ Bouton glossaire (barre du haut) ============ */
+.gloss-btn {
+  flex: 0 0 auto;
+  border: 1px solid var(--border); background: var(--panel); color: var(--text);
+  border-radius: 9px; width: 36px; height: 34px; font-size: 15px; cursor: pointer;
+}
+.gloss-btn:hover { border-color: rgba(255, 255, 255, 0.35); }
+
+/* ============ Page Glossaire ============ */
+.gloss { padding: 6px 2px 48px; }
+.gloss-head { padding: 30px 4px 10px; }
+.gloss-head h1 { margin: 0 0 6px; font-size: clamp(26px, 6.5vw, 40px); font-weight: 800; letter-spacing: -1px; }
+.gloss-head h1::after { content: '.'; color: var(--accent); }
+.gloss-head p { margin: 0; color: var(--dim); font-size: 14.5px; max-width: 600px; }
+.gloss-search {
+  width: 100%; margin: 16px 0 6px;
+  border: 1px solid var(--border); background: var(--panel); color: var(--text);
+  border-radius: 11px; padding: 12px 14px; font-size: 15px; font-family: inherit;
+}
+.gloss-search::placeholder { color: var(--faint); }
+.gloss-count { color: var(--faint); font-size: 12.5px; padding: 4px 4px 0; }
+.gloss-list { margin: 10px 0 0; }
+.gloss-term {
+  border-top: 1px solid var(--border);
+  padding: 15px 4px;
+}
+.gloss-term:last-child { border-bottom: 1px solid var(--border); }
+.gloss-term dt { font-weight: 700; color: var(--text); font-size: 15.5px; letter-spacing: -0.2px; }
+.gloss-term dd { margin: 6px 0 0; color: var(--dim); font-size: 14px; line-height: 1.6; }
+.gloss-empty { color: var(--dim); padding: 28px 4px; font-size: 14px; }
+.gloss-foot-link { display: inline-block; margin-top: 22px; color: var(--accent); font-size: 14px; font-weight: 600; }

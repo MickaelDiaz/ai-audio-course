@@ -3,6 +3,8 @@
    Gauche : forme d'onde vivante (+ fenêtre de Hann réelle).
    Droite : spectre VRAI (U.rfftMag, 512 pts) en barres annotées en Hz.
    Mode décomposition : chaque sinusoïde reliée à SA barre du spectre.
+   Mise en page responsive : empilée verticalement sur mobile (temps en
+   haut, puis composantes, puis spectre en grand) ; côte à côte sur desktop.
    ============================================================ */
 (function () {
   'use strict';
@@ -34,29 +36,30 @@
     icon: 'ƒ',
     summary: 'Tout signal est une somme de sinusoïdes : la FFT révèle lesquelles, et avec quelle force.',
     explain: `
-      <p>Le théorème de Fourier dit que <strong>tout signal</strong> peut s'écrire comme une
-      <strong>somme de sinusoïdes</strong>, chacune définie par sa fréquence, son <strong>amplitude</strong>
-      (la hauteur de sa barre dans le spectre) et sa <strong>phase</strong> (son décalage temporel, que la
-      magnitude seule ne montre pas). La <strong>FFT</strong> (<em>Fast Fourier Transform</em>) calcule cette
-      décomposition en <code>O(N log N)</code> au lieu de <code>O(N²)</code> pour la DFT naïve — c'est ce qui
-      rend l'analyse spectrale temps réel possible : ici une trame de 512 échantillons est analysée à chaque image.</p>
-      <p>La <strong>résolution fréquentielle</strong> vaut <code>Δf = fs / N</code> : avec fs = 8 kHz et
-      N = 512, chaque bin couvre 15,625 Hz. C'est un compromis fondamental : distinguer deux fréquences
+      <p>Le <dfn class="term" data-term="fourier">théorème de Fourier</dfn> dit que <strong>tout signal</strong> peut s'écrire comme une
+      <strong>somme de <dfn class="term" data-term="sinusoide">sinusoïdes</dfn></strong>, chacune définie par sa <dfn class="term" data-term="frequence">fréquence</dfn>, son <strong><dfn class="term" data-term="amplitude">amplitude</dfn></strong>
+      (la hauteur de sa barre dans le spectre) et sa <strong><dfn class="term" data-term="phase">phase</dfn></strong> (son décalage temporel, que la
+      <dfn class="term" data-term="magnitude">magnitude</dfn> seule ne montre pas). La <strong><dfn class="term" data-term="fft">FFT</dfn></strong> (<em>Fast Fourier Transform</em>) calcule cette
+      décomposition en <code>O(N log N)</code> au lieu de <code>O(N²)</code> pour la <dfn class="term" data-term="dft">DFT</dfn> naïve — c'est ce qui
+      rend l'analyse spectrale temps réel possible : ici une <dfn class="term" data-term="frame">trame</dfn> de 512 <dfn class="term" data-term="sample">échantillons</dfn> est analysée à chaque image.</p>
+      <p>La <strong><dfn class="term" data-term="resolution-frequentielle">résolution fréquentielle</dfn></strong> vaut <code>Δf = fs / N</code> : avec fs = 8 kHz et
+      N = 512, chaque <dfn class="term" data-term="fft-bin">bin</dfn> couvre 15,625 Hz. C'est un <dfn class="term" data-term="compromis-temps-frequence">compromis fondamental</dfn> : distinguer deux fréquences
       proches exige d'observer le signal <em>plus longtemps</em> (N grand), mais on perd alors en précision
       temporelle — on sait <em>quoi</em> sans savoir exactement <em>quand</em>. Ce dilemme temps-fréquence
-      est au cœur du spectrogramme et de tous les front-ends audio.</p>
-      <p>Découper une trame de 64 ms revient à multiplier le signal par une <strong>fenêtre rectangulaire</strong> :
+      est au cœur du <dfn class="term" data-term="spectrogram">spectrogramme</dfn> et de tous les front-ends audio.</p>
+      <p>Découper une trame de 64 ms revient à multiplier le signal par une <strong><dfn class="term" data-term="fenetre-rectangulaire">fenêtre rectangulaire</dfn></strong> :
       les discontinuités aux bords font « fuir » l'énergie d'une sinusoïde sur les bins voisins
-      (<strong>fuites spectrales</strong>, sidelobes à −13 dB). La <strong>fenêtre de Hann</strong> adoucit
+      (<strong><dfn class="term" data-term="fuite-spectrale">fuites spectrales</dfn></strong>, sidelobes à −13 dB). La <strong><dfn class="term" data-term="window">fenêtre de Hann</dfn></strong> adoucit
       les bords : le lobe principal s'élargit un peu, mais les fuites chutent drastiquement — activez le
       toggle pour comparer sur le sinus à 700 Hz, volontairement placé entre deux bins.</p>
-      <p>Le préréglage « Carré » illustre la convergence : un carré = somme des harmoniques
+      <p>Le préréglage « Carré » illustre la convergence : un carré = somme des <dfn class="term" data-term="harmonique">harmoniques</dfn>
       <strong>impaires</strong> d'amplitude 4/(πk). Avec un nombre fini d'harmoniques, des oscillations
       persistent près des fronts et le dépassement tend vers ≈ 9 % quel que soit leur nombre :
-      c'est le <strong>phénomène de Gibbs</strong>, mesuré en direct sur la trame.</p>`,
+      c'est le <strong><dfn class="term" data-term="gibbs">phénomène de Gibbs</dfn></strong>, mesuré en direct sur la trame.</p>`,
 
     init(stage) {
       const ctx = stage.ctx;
+      const fs = (n) => stage.fs(n);   // taille de police lisible (agrandie sur mobile)
 
       /* ---- buffers pré-alloués (rien de gros n'est créé dans onFrame) ---- */
       const buf = new Float32Array(N);       // trame brute
@@ -106,7 +109,11 @@
         });
       }
 
-      /* ---- panneau temporel ---- */
+      /* ---- panneau temporel ----
+         Toutes les tailles passent par fs() : inchangées sur desktop (≥ 560),
+         agrandies sur mobile. Les seuils de largeur (r.w > …) restent des
+         seuils de PLACE, pas d'écran : sur mobile le panneau est plein-largeur
+         (≈ 360 px), donc les annotations détaillées s'affichent bien. */
       function drawWavePanel(r, t, preset, hannOn, color, ampNow, nH) {
         U.frame(ctx, r.x, r.y, r.w, r.h,
           r.w > 240 ? `Temps — trame de ${Math.round(DUR * 1000)} ms (fs = 8 kHz)` : 'Temps');
@@ -137,8 +144,8 @@
           }
           ctx.restore();
           U.wave(ctx, wbuf, r.x, r.y, r.w, r.h, { color, lw: 1.6, scale: SC });
-          if (r.w > 230) U.text(ctx, 'fenêtre de Hann × signal', r.x + r.w / 2, r.y + 13,
-            { size: 10, color: palette.rest, align: 'center' });
+          if (r.w > 230) U.text(ctx, 'fenêtre de Hann × signal', r.x + r.w / 2, r.y + fs(13),
+            { size: fs(10), color: palette.rest, align: 'center' });
         } else {
           U.wave(ctx, buf, r.x, r.y, r.w, r.h, { color, lw: 1.6, scale: SC });
         }
@@ -152,24 +159,31 @@
             const px = r.x + (pi / (N - 1)) * r.w;
             const py = cy - U.clamp(buf[pi] * SC * r.h / 2, -r.h / 2, r.h / 2);
             U.glowDot(ctx, px, py, 2.5, palette.orange);
-            const lx = U.clamp(px, r.x + 80, r.x + r.w - 80);
-            const ly = buf[pi] > 0 ? Math.max(r.y + 12, py - 12) : Math.min(r.y + r.h - 8, py + 18);
+            const lx = U.clamp(px, r.x + fs(80), r.x + r.w - fs(80));
+            const ly = buf[pi] > 0 ? Math.max(r.y + fs(12), py - 12) : Math.min(r.y + r.h - 8, py + 18);
             U.text(ctx, `Gibbs : dépassement +${fr1(over * 100)} %`, lx, ly,
-              { size: 10, color: palette.orange, align: 'center' });
+              { size: fs(10), color: palette.orange, align: 'center' });
           }
           if (r.w > 260) U.text(ctx,
             `${nH} harmonique${nH > 1 ? 's' : ''} impaire${nH > 1 ? 's' : ''} (k ≤ ${2 * nH - 1}) — convergence vers le carré`,
-            r.x + r.w / 2, r.y + r.h - 6, { size: 10, color: palette.dim, align: 'center' });
+            r.x + r.w / 2, r.y + r.h - fs(6), { size: fs(10), color: palette.dim, align: 'center' });
         }
         if (preset === 'Pseudo-parole' && r.w > 260) U.text(ctx,
           'pseudo-parole : f₀ ≈ 120 Hz, harmoniques + bruit large bande',
-          r.x + r.w / 2, r.y + r.h - 6, { size: 10, color: palette.dim, align: 'center' });
+          r.x + r.w / 2, r.y + r.h - fs(6), { size: fs(10), color: palette.dim, align: 'center' });
       }
 
       /* ---- panneau spectral ---- */
       function drawSpectrum(r, color, activeIdx, pulse, showComps, hannOn) {
+        const compact = stage.compact;
         U.frame(ctx, r.x, r.y, r.w, r.h,
           r.w > 260 ? 'Fréquence — spectre |X(f)| (FFT réelle, 512 points)' : 'Fréquence');
+        /* Mode de fenêtre : sur mobile, sur SA PROPRE ligne au-dessus du panneau
+           (au-dessus du titre du cadre), pour ne pas recouvrir le titre. */
+        if (compact) U.text(ctx,
+          hannOn ? 'Hann : fuites réduites' : 'rectangulaire : fuites spectrales',
+          r.x + 8, r.y - 6 - Math.round(fs(13)),
+          { size: fs(10), color: hannOn ? palette.rest : palette.dim });
         const bw = r.w / SHOW, baseY = r.y + r.h - 1;
         ctx.save();
         for (let i = 0; i < SHOW; i++) {
@@ -194,28 +208,38 @@
             const by = baseY - U.clamp(magS[c.bin], 0, 1) * (r.h - 5);
             U.glowDot(ctx, bx, by, 2 + 2.5 * pulse, col);
             U.text(ctx, `${Math.round(c.f)} Hz`, U.clamp(bx, r.x + 22, r.x + r.w - 24),
-              Math.max(r.y + 11, by - 7), { size: 10, bold: true, color: col, align: 'center', mono: true });
+              Math.max(r.y + fs(11), by - 7), { size: fs(10), bold: true, color: col, align: 'center', mono: true });
           }
         }
 
         /* axe en Hz (étendue vraie : SHOW × Δf) */
         const maxF = SHOW * DF;
+        /* Mobile : graduations plus espacées (1 kHz) et police réduite pour que
+           l'axe tienne dans la largeur ; chaque libellé est borné pour ne pas
+           déborder à droite. Pas de libellé maxF supplémentaire (évite le chevauchement). */
+        const axisStep = compact ? 1000 : 500;
+        const axisFs = compact ? fs(8) : fs(9);
         ctx.save();
         ctx.strokeStyle = palette.grid;
         ctx.beginPath(); ctx.moveTo(r.x, baseY + 1); ctx.lineTo(r.x + r.w, baseY + 1); ctx.stroke();
-        for (let f = 0; f <= maxF; f += 500) {
+        for (let f = 0; f <= maxF; f += axisStep) {
           const tx = r.x + (f / maxF) * r.w;
           ctx.beginPath(); ctx.moveTo(tx, baseY + 1); ctx.lineTo(tx, baseY + 5); ctx.stroke();
-          U.text(ctx, U.fmt.hz(f), Math.max(tx, r.x + 10), baseY + 14,
-            { size: 9, color: palette.faint, align: f === 0 ? 'left' : 'center', mono: true });
+          /* desktop : comportement d'origine (clamp gauche seul) ; mobile :
+             clamp droit en plus pour que le dernier libellé ne déborde pas. */
+          const lx = compact ? U.clamp(tx, r.x + 10, r.x + r.w - 16) : Math.max(tx, r.x + 10);
+          U.text(ctx, U.fmt.hz(f), lx, baseY + fs(14),
+            { size: axisFs, color: palette.faint, align: f === 0 ? 'left' : 'center', mono: true });
         }
-        if (r.w > 300) U.text(ctx, U.fmt.hz(maxF), r.x + r.w, baseY + 14,
-          { size: 9, color: palette.faint, align: 'right', mono: true });
+        if (!compact && r.w > 300) U.text(ctx, U.fmt.hz(maxF), r.x + r.w, baseY + fs(14),
+          { size: axisFs, color: palette.faint, align: 'right', mono: true });
         ctx.restore();
 
-        if (r.w > 280) U.text(ctx,
+        /* Desktop : mode de fenêtre dans le coin haut-droit du panneau (inchangé).
+           Sur mobile, ce libellé est déjà dessiné au-dessus du panneau (voir plus haut). */
+        if (!compact && r.w > 280) U.text(ctx,
           hannOn ? 'Hann : fuites réduites, lobe élargi' : 'rectangulaire : fuites spectrales',
-          r.x + r.w - 6, r.y + 12, { size: 10, color: hannOn ? palette.rest : palette.dim, align: 'right' });
+          r.x + r.w - 6, r.y + fs(12), { size: fs(10), color: hannOn ? palette.rest : palette.dim, align: 'right' });
       }
 
       /* ---- composantes empilées + liens pointillés vers le spectre ---- */
@@ -233,7 +257,7 @@
             { color: col, lw: act ? 1.5 : 1, alpha: act ? 0.55 + 0.45 * pulse : 0.42, scale: 0.85 * rel });
           if (act && pulse > 0.05) ctx.restore();
           U.text(ctx, (c.k ? `k=${c.k} · ` : '') + `${Math.round(c.f)} Hz · a=${frNum(c.a.toFixed(2))}`,
-            r.x + 3, rcy + 3, { size: 9, color: col, mono: true });
+            r.x + 3, rcy + 3, { size: fs(9), color: col, mono: true });
 
           /* lien vers SA barre */
           if (c.bin < SHOW) {
@@ -249,7 +273,7 @@
           }
         }
         if (nShown < comps.length) U.text(ctx, `… +${comps.length - nShown} harmoniques`,
-          r.x + r.w - 4, r.y + r.h - 4, { size: 9, color: palette.faint, align: 'right' });
+          r.x + r.w - 4, r.y + r.h - 4, { size: fs(9), color: palette.faint, align: 'right' });
       }
 
       /* ================== boucle de rendu ================== */
@@ -299,20 +323,77 @@
         const intro = U.ease(U.clamp(t / 0.8, 0, 1));
         const mainColor = preset === 'Pseudo-parole' ? palette.voice : palette.blue;
 
-        /* -- mise en page, recalculée depuis W/H à chaque frame -- */
-        const narrow = W < 560;
-        const pad = narrow ? 8 : 12;
-        const top = pad + (narrow ? 16 : 20);
+        const compact = stage.compact;
+        const pad = compact ? 10 : 12;
         const bottom = H - pad;
-        const LBL = 14;
+        /* hauteur d'une ligne de composante, et d'un label de panneau : agrandis
+           sur mobile pour rester lisibles. */
+        const ROW = compact ? Math.round(fs(15)) : 17;
+        const LBL = compact ? Math.round(fs(16)) : 14;
 
-        U.text(ctx, `fs = 8 kHz · N = ${N} · Δf = fs/N = ${frNum(DF)} Hz · trame = ${Math.round(DUR * 1000)} ms`,
-          pad, pad + 9, { size: narrow ? 9 : 11, color: palette.dim, mono: true });
-        if (W > 430) U.text(ctx, `pic ≈ ${U.fmt.hz(peakBin * DF)}`, W - pad, pad + 9,
-          { size: narrow ? 9 : 11, color: mainColor, align: 'right', mono: true, bold: true });
+        /* -- bandeau d'en-tête (commun) -- */
+        const headFs = compact ? fs(10) : 11;
+        let top;
+        if (compact) {
+          /* Mobile : en-tête sur DEUX lignes (info détaillée puis pic), pour ne
+             jamais empiéter l'une sur l'autre. La 1re ligne est mesurée puis
+             réduite si elle dépasse la largeur disponible. */
+          const y1 = pad + Math.round(fs(9));
+          const headW = Math.max(20, W - 2 * pad);
+          const sInfo = `fs = 8 kHz · N = ${N} · Δf = fs/N = ${frNum(DF)} Hz · trame = ${Math.round(DUR * 1000)} ms`;
+          ctx.font = `${headFs}px ${U.MONO}`;
+          const infoFs = Math.max(fs(8), ctx.measureText(sInfo).width > headW ? headFs * headW / ctx.measureText(sInfo).width : headFs);
+          U.text(ctx, sInfo, pad, y1, { size: infoFs, color: palette.dim, mono: true });
+          const y2 = y1 + Math.round(fs(11));
+          U.text(ctx, `pic ≈ ${U.fmt.hz(peakBin * DF)}`, pad, y2,
+            { size: headFs, color: mainColor, mono: true, bold: true });
+          top = y2 + 6;
+        } else {
+          U.text(ctx, `fs = 8 kHz · N = ${N} · Δf = fs/N = ${frNum(DF)} Hz · trame = ${Math.round(DUR * 1000)} ms`,
+            pad, pad + 9, { size: headFs, color: palette.dim, mono: true });
+          if (W > 430) U.text(ctx, `pic ≈ ${U.fmt.hz(peakBin * DF)}`, W - pad, pad + 9,
+            { size: headFs, color: mainColor, align: 'right', mono: true, bold: true });
+          top = pad + 20;
+        }
 
         let waveR, specR, compR = null, rowH = 0, nShown = 0;
-        if (!narrow) {
+
+        if (compact) {
+          /* ===== Mobile : empilement vertical (on profite de la hauteur) =====
+             Temps en haut → composantes (si activées) → spectre en grand en bas.
+             Le spectre garde la part du lion car c'est le cœur du module. */
+          const x = pad, w = Math.max(20, W - 2 * pad);
+          const avail = Math.max(0, bottom - top);
+          const wantComp = showComps && avail > 260;
+
+          /* répartition verticale en fractions de la place disponible */
+          const waveFrac = wantComp ? 0.30 : 0.42;
+          const compFrac = wantComp ? 0.24 : 0;
+
+          let y = top + LBL;
+          const waveH = Math.max(64, Math.round(avail * waveFrac) - LBL);
+          waveR = { x, y, w, h: waveH };
+          y += waveH + Math.round(fs(8));
+
+          if (wantComp) {
+            U.text(ctx, 'composantes sinusoïdales', x + 2, y - Math.round(fs(5)),
+              { size: fs(10.5), color: palette.dim });
+            const compH = Math.max(0, Math.round(avail * compFrac));
+            nShown = Math.max(0, Math.min(comps.length, Math.floor(compH / ROW)));
+            if (nShown > 0) {
+              compR = { x, y, w, h: compH };
+              rowH = compH / nShown;
+              y += compH + Math.round(fs(8));
+            }
+          }
+
+          /* LBL réserve le titre du cadre ; on ajoute fs(13) pour la ligne du
+             mode de fenêtre, désormais placée AU-DESSUS du titre du spectre. */
+          y += LBL + Math.round(fs(13));
+          const specH = Math.max(72, bottom - Math.round(fs(18)) - y);
+          specR = { x, y, w, h: specH };
+        } else {
+          /* ===== Desktop / tablette : disposition côte à côte (inchangée) ===== */
           const leftX = pad, leftW = Math.round((W - 3 * pad) * 0.55);
           const rightX = leftX + leftW + pad, rightW = W - rightX - pad;
           const cTop = top + LBL, leftH = bottom - cTop;
@@ -330,25 +411,11 @@
               U.text(ctx, 'composantes sinusoïdales', leftX + 2, compTop - 5, { size: 10, color: palette.dim });
             }
           }
-        } else {
-          const x = pad, w = W - 2 * pad;
-          const avail = bottom - top;
-          const wantComp = showComps && avail > 200;
-          let y = top + LBL;
-          waveR = { x, y, w, h: Math.max(40, Math.round(avail * (wantComp ? 0.30 : 0.42)) - LBL) };
-          y += waveR.h + 6;
-          if (wantComp) {
-            const compH = Math.round(avail * 0.24);
-            nShown = Math.max(0, Math.min(comps.length, Math.floor(compH / 15)));
-            if (nShown > 0) { compR = { x, y, w, h: compH }; rowH = compH / nShown; y += compH + 6; }
-          }
-          y += LBL;
-          specR = { x, y, w, h: Math.max(40, bottom - 16 - y) };
         }
 
         drawWavePanel(waveR, t, preset, hannOn, mainColor, ampNow, nH);
         drawSpectrum(specR, mainColor, activeIdx, pulse, showComps, hannOn);
-        if (compR) drawComps(compR, rowH, nShown, t, activeIdx, pulse, specR, intro);
+        if (compR && rowH > 0) drawComps(compR, rowH, nShown, t, activeIdx, pulse, specR, intro);
       });
     },
   });

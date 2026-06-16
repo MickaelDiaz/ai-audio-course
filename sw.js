@@ -1,5 +1,5 @@
 /* Audio AI Atlas — service worker (cache-first, offline complet) */
-const VERSION = 'atlas-v1';
+const VERSION = 'atlas-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -7,6 +7,7 @@ const ASSETS = [
   './app.js',
   './manifest.webmanifest',
   './core/viz-core.js',
+  './core/glossary.js',
   './modules/sampling.js',
   './modules/fft.js',
   './modules/stft.js',

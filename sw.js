@@ -1,5 +1,7 @@
-/* Audio AI Atlas — service worker (cache-first, offline complet) */
-const VERSION = 'atlas-v2';
+/* Audio AI Atlas — service worker (network-first, repli cache hors-ligne)
+   Online → toujours la dernière version (et on rafraîchit le cache au passage).
+   Offline (métro) → repli sur le cache pré-chargé à l'installation. */
+const VERSION = 'atlas-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -44,16 +46,16 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+  if (new URL(e.request.url).origin !== location.origin) return; // ne gère que le même origine
   e.respondWith(
-    caches.match(e.request).then((hit) => {
-      if (hit) return hit;
-      return fetch(e.request).then((res) => {
-        if (res.ok && new URL(e.request.url).origin === location.origin) {
+    fetch(e.request)
+      .then((res) => {
+        if (res && res.ok) {
           const clone = res.clone();
           caches.open(VERSION).then((c) => c.put(e.request, clone));
         }
         return res;
-      });
-    })
+      })
+      .catch(() => caches.match(e.request).then((hit) => hit || caches.match('./index.html')))
   );
 });
